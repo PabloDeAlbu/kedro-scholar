@@ -1,0 +1,48 @@
+# Here you can define all your data sets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+
+### REPOSITORY DB
+"dspacedb/public/{table}":
+  type: pandas.SQLTableDataset
+  table_name: "{table}"
+  load_args:
+    schema: "public"
+  credentials: "dspacedb"
+
+"raw/{source}/{entity}#parquet":
+  type: pandas.ParquetDataset
+  filepath: "data/01_raw/{source}/{entity}.parquet"
+  metadata:
+    kedro-viz:
+      layer: raw
+
+"intermediate/{source}/{entity}#parquet":
+  type: pandas.ParquetDataset
+  filepath: "data/02_intermediate/{source}/{entity}.parquet"
+  metadata:
+    kedro-viz:
+      layer: raw
+
+# landing
+"ldg/{source}/{tablename}":
+  type: pandas.SQLTableDataset
+  table_name: "{tablename}"
+  load_args:
+    schema: "ldg_{source}"
+  save_args:
+    schema: "ldg_{source}"
+    if_exists: replace
+  credentials: dw
+
+# staging
+"stg/{source}/{dataset}":
+  type: pandas.SQLTableDataset
+  table_name: "{dataset}"
+  save_args:
+    schema: "stg_{source}"
+    if_exists: replace
+  load_args:
+    schema: "stg_{source}"
+  credentials: dw
