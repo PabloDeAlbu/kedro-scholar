@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'openalex_works'
+This is a boilerplate pipeline 'openalex'
 generated using Kedro 0.19.9
 """
 
