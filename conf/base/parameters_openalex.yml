@@ -3,6 +3,6 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
-openalex_work_fetch_options:
+openalex_fetch_options:
     # REPLACE with institution ror.
     institution_ror: 'https://ror.org/02s7sax82'
