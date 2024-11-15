@@ -46,3 +46,10 @@
   load_args:
     schema: "stg_{source}"
   credentials: dw
+
+"stg/{dataset}":
+  type: pandas.SQLTableDataset
+  table_name: "{dataset}"
+  load_args:
+    schema: "stg"
+  credentials: dw
