@@ -11,6 +11,13 @@
     schema: "public"
   credentials: "dspacedb"
 
+"raw/{source}/{entity}":
+  type: pandas.CSVDataset
+  filepath: "data/01_raw/{source}/{entity}.csv"
+  metadata:
+    kedro-viz:
+      layer: raw
+
 "raw/{source}/{entity}#parquet":
   type: pandas.ParquetDataset
   filepath: "data/01_raw/{source}/{entity}.parquet"
