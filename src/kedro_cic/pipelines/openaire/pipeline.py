@@ -22,12 +22,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs=["raw/openaire/researchproduct"],
             outputs=[
                 "ldg/openaire/researchproduct",
-                "ldg/openaire/researchproduct_collectedfrom",
+                # "ldg/openaire/researchproduct_collectedfrom",
                 "ldg/openaire/researchproduct_originalId",
-                "ldg/openaire/researchproduct_measure",
-                "ldg/openaire/researchproduct_title",
+                # "ldg/openaire/researchproduct_measure",
+                # "ldg/openaire/researchproduct_title",
                 "ldg/openaire/researchproduct_source",
-                "ldg/openaire/researchproduct_subject",
+                # "ldg/openaire/researchproduct_subject",
             ],
         ),
     ], tags="openaire"

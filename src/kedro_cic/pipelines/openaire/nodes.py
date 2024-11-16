@@ -5,7 +5,67 @@ import pandas as pd
 import requests
 import xmltodict
 
-def transform_researchproduct(df):
+def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.DataFrame:
+    base_url = "https://api.openaire.eu/search/researchProducts"
+    df_list = []
+
+    doi_limit = 9999
+    if (env == 'dev'): doi_limit = 9
+    
+    skipped_list = []
+
+    not_in_openaire = dim_doi['in_openaire'] == False
+    dim_doi = dim_doi[not_in_openaire]
+
+    doi_list = dim_doi.iloc[0:doi_limit]['doi'].to_list()
+    doi_comma_separated = ','.join(doi_list)
+
+    # se define cantidad de batches a partir de la cantidad de resultados por batch y cantidad de doi
+    batch_size = 10
+    num_batches = math.ceil(len(doi_list) / batch_size)
+
+    for batch_index in range(num_batches):
+
+        batch = doi_list[batch_index * batch_size : (batch_index + 1) * batch_size]
+        doi_comma_separated = ','.join(batch)
+
+        graph_url = f"{base_url}?doi={doi_comma_separated}"
+        headers = { 'Authorization': f'Bearer {r_token}' }
+
+        api_response = requests.get(graph_url, headers=headers)
+        print(f'GET "{graph_url}" {api_response.status_code}')
+
+        if api_response.status_code == 200:
+            data_dict = xmltodict.parse(api_response.content)
+            results = data_dict.get('response', {}).get('results', {}).get('result', [])
+
+            for result in results:
+
+                publication_header = result.get('header', {})
+                publication_metadata = result.get('metadata', {}).get('oaf:entity', {}).get('oaf:result', {})
+
+                publication = publication_header | publication_metadata 
+                if publication:
+                    df_normalized = pd.json_normalize(publication, max_level=0)
+                    df_list.append(df_normalized)
+                else:
+                    print("No publication data found in result")
+        else:
+            print(f'Error: Received status code {api_response.status_code}')
+            skipped_list.extend(batch)
+            break
+
+    print(f'{len(df_list)} batches processed')
+    print(f'{len(skipped_list)} DOIs skipped')
+
+    if df_list:
+        df = pd.concat(df_list, ignore_index=True)
+    else:
+        df = pd.DataFrame()
+
+    return df
+
+def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
     def get_value_by_attr(value, attr, attr_filter, attr_value):
         if isinstance(value, dict):
             if value.get(attr_filter) == attr_value:
@@ -81,70 +141,4 @@ def transform_researchproduct(df):
 
     df_researchproduct['load_datetime'] = date.today()
 
-    return df_researchproduct, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject
-    
-
-
-def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.DataFrame:
-    base_url = "https://api.openaire.eu/search/researchProducts"
-    df_list = []
-
-    doi_limit = 9999
-    if (env == 'dev'): doi_limit = 9
-    
-    skipped_list = []
-
-    not_in_openaire = dim_doi['in_openaire'] == False
-    dim_doi = dim_doi[not_in_openaire]
-
-    doi_list = dim_doi.iloc[0:doi_limit]['doi'].to_list()
-    doi_comma_separated = ','.join(doi_list)
-
-    # se define cantidad de batches a partir de la cantidad de resultados por batch y cantidad de doi
-    batch_size = 10
-    num_batches = math.ceil(len(doi_list) / batch_size)
-
-    for batch_index in range(num_batches):
-
-        batch = doi_list[batch_index * batch_size : (batch_index + 1) * batch_size]
-        doi_comma_separated = ','.join(batch)
-
-        graph_url = f"{base_url}?doi={doi_comma_separated}"
-        headers = { 'Authorization': f'Bearer {r_token}' }
-
-        api_response = requests.get(graph_url, headers=headers)
-        print(f'GET "{graph_url}" {api_response.status_code}')
-
-        if api_response.status_code == 200:
-            data_dict = xmltodict.parse(api_response.content)
-            results = data_dict.get('response', {}).get('results', {}).get('result', [])
-
-            for result in results:
-
-                publication_header = result.get('header', {})
-                publication_metadata = result.get('metadata', {}).get('oaf:entity', {}).get('oaf:result', {})
-
-                publication = publication_header | publication_metadata 
-                if publication:
-                    df_normalized = pd.json_normalize(publication, max_level=0)
-                    df_list.append(df_normalized)
-                else:
-                    print("No publication data found in result")
-        else:
-            print(f'Error: Received status code {api_response.status_code}')
-            skipped_list.extend(batch)
-            break
-
-    print(f'{len(df_list)} batches processed')
-    print(f'{len(skipped_list)} DOIs skipped')
-
-    if df_list:
-        df = pd.concat(df_list, ignore_index=True)
-    else:
-        df = pd.DataFrame()
-
-    return df
-
-def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
-    df_researchproduct, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject = transform_researchproduct(df)
-    return df_researchproduct, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject
+    return df_researchproduct, df_researchproduct_originalId, df_researchproduct_source
