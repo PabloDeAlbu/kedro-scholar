@@ -81,7 +81,7 @@ def transform_researchproduct(df):
 
     df_researchproduct['load_datetime'] = date.today()
 
-    return df_researchproduct#, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject
+    return df_researchproduct, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject
     
 
 
@@ -143,7 +143,8 @@ def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.Dat
     else:
         df = pd.DataFrame()
 
-    return df, skipped_list
+    return df
 
 def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
-    return df
+    df_researchproduct, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject = transform_researchproduct(df)
+    return df_researchproduct, df_researchproduct_collectedfrom, df_researchproduct_originalId, df_researchproduct_measure, df_researchproduct_title, df_researchproduct_source, df_researchproduct_subject

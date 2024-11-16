@@ -20,7 +20,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="land_researchproduct_openaire",
             func=land_researchproduct_openaire,
             inputs=["raw/openaire/researchproduct"],
-            outputs="ldg/openaire/researchproduct",
+            outputs=[
+                "ldg/openaire/researchproduct",
+                "ldg/openaire/researchproduct_collectedfrom",
+                "ldg/openaire/researchproduct_originalId",
+                "ldg/openaire/researchproduct_measure",
+                "ldg/openaire/researchproduct_title",
+                "ldg/openaire/researchproduct_source",
+                "ldg/openaire/researchproduct_subject",
+            ],
         ),
     ], tags="openaire"
 )
