@@ -66,79 +66,104 @@ def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.Dat
     return df
 
 def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
-    def get_value_by_attr(value, attr, attr_filter, attr_value):
-        if isinstance(value, dict):
-            if value.get(attr_filter) == attr_value:
-                return value.get(attr)
-        elif isinstance(value, list):
-            for item in value:
-                if item.get(attr_filter) == attr_value:
-                    return item.get(attr)
-        return None
 
-    def convert_to_dict_or_list(value):
-        try:
-            return ast.literal_eval(value)
-        except (ValueError, SyntaxError):
-            return value
+    ## Paso 1: Convierto tipos y selecciono columnas con cardinalidad 1 con respecto a cada research product
+    df = df.convert_dtypes()
+    df_researchproduct = df.loc[:,
+    [
+    #       '@xmlns:xsi', 
+        'dri:objIdentifier', 
+        'dri:dateOfCollection',
+        'dri:dateOfTransformation', 
+    #       'collectedfrom', 
+    #       'originalId', 
+    #       'pid',
+    #       'measure', 
+        'fulltext', 
+    #       'title', 
+    #       'bestaccessright', 
+    #       'creator', 
+    #       'country',
+        'dateofacceptance', 
+        'description', 
+    #       'subject', 
+    #       'language',
+    #       'relevantdate', 
+        'publisher', 
+    #       'source', 
+    #       'format', 
+    #       'resulttype',
+    #       'resourcetype', 
+        'isgreen', 
+        'openaccesscolor', 
+        'isindiamondjournal',
+        'publiclyfunded', 
+    #       'journal', 
+    #       'datainfo', 
+    #       'rels', 
+    #       'children', 
+    #       'context',
+    #       'contributor', 
+    #       'embargoenddate', 
+    #       'processingchargeamount',
+    #       'processingchargecurrency', 
+    #       'lastmetadataupdate', 
+    #       'storagedate',
+    #       'version'
+    ]
+    ]
 
-    df_researchproduct = pd.DataFrame()
-
-    df_researchproduct['id'] = df['dri:objIdentifier']
-    df_researchproduct['dateOfCollection'] = df['dri:dateOfCollection']
-
-    df['collectedfrom'] = df['collectedfrom'].apply(convert_to_dict_or_list)
-    df_researchproduct_collectedfrom = df.loc[:,['dri:objIdentifier','collectedfrom']].explode('collectedfrom').reset_index(drop=True)
-    df_researchproduct_collectedfrom['collectedfrom'] = df_researchproduct_collectedfrom['collectedfrom']
-
-    df['originalId'] = df['originalId'].apply(convert_to_dict_or_list)
-    df_researchproduct_originalId = df.loc[:,['dri:objIdentifier','originalId']].explode('originalId').reset_index(drop=True)
-
-    df['pid'] = df['pid'].apply(convert_to_dict_or_list)
-
-    df_researchproduct['doi'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='doi')
-    df_researchproduct['pmid'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='pmid')
-    df_researchproduct['pmc'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='pmc')
-    df_researchproduct['arXiv'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='arXiv')
-    df_researchproduct['uniprot'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='uniprot')
-    df_researchproduct['ena'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='ena')
-    df_researchproduct['pdb'] = df.loc[:,'pid'].apply(get_value_by_attr, attr='#text', attr_filter='@classid' ,attr_value='pdb')
-
-    df['measure'] = df['measure'].apply(convert_to_dict_or_list)
-    df_researchproduct_measure = df.loc[:,['dri:objIdentifier','measure']].explode('measure').reset_index(drop=True)
-
-    df['title'] = df['title'].apply(convert_to_dict_or_list)
-    df_researchproduct_title = df.loc[:,['dri:objIdentifier','title']].explode('title').reset_index(drop=True)
-
-    df['bestaccessright'] = df['bestaccessright'].apply(convert_to_dict_or_list)
-    df_researchproduct['bestaccessright'] = df.loc[:,'bestaccessright'].apply(lambda x: x.get('@classname'))
-
-    df_researchproduct['dateofacceptance'] = df['dateofacceptance']
-    
-    df_researchproduct['publisher'] = df.loc[:,'publisher']
-    
-    df['source'] = df['source'].apply(convert_to_dict_or_list)
-    df_researchproduct_source = df.loc[:,['dri:objIdentifier','source']].explode('source').reset_index(drop=True)
-
-    df['resulttype'] = df['resulttype'].apply(convert_to_dict_or_list)
-    df_researchproduct['resulttype'] = df['resulttype'].apply(lambda x: x.get('@classname'))
-
-    df['resourcetype'] = df['resourcetype'].apply(convert_to_dict_or_list)
-    df_researchproduct['resourcetype'] = df['resourcetype'].apply(lambda x: x.get('@classname'))
-    
-    df_researchproduct['isgreen'] = df['isgreen']
-
-    df_researchproduct['openaccesscolor'] = df['openaccesscolor']
-
-    df_researchproduct['isindiamondjournal'] = df['isindiamondjournal']
-    
-    df_researchproduct['publiclyfunded'] = df['publiclyfunded']
-    # df['journal'] = df['journal'].apply(convert_to_dict_or_list)
-    # df_researchproduct['journal'] = df['journal']
-
-    df['subject'] = df['subject'].apply(convert_to_dict_or_list)
-    df_researchproduct_subject = df.loc[:,['dri:objIdentifier','subject']].explode('subject').reset_index(drop=True)
-
+    # Paso 2: Agrego fecha de carga
     df_researchproduct['load_datetime'] = date.today()
 
-    return df_researchproduct, df_researchproduct_originalId, df_researchproduct_source
+    return df_researchproduct
+
+def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
+
+    ## Paso 0: Seleccionar columnas con identificador y 'measure'
+    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'measure']]
+    df_researchproduct = df_researchproduct.convert_dtypes()
+
+    ## Paso 1: Asegurarse de que 'measure' sea un diccionario o lista
+    df_researchproduct['measure'] = df_researchproduct['measure'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    df_researchproduct['measure'] = df_researchproduct['measure'].apply(lambda x: [x] if not isinstance(x, list) else x)
+
+    ## Paso 2: Explode la columna 'measure' y reinicia el índice
+    df_researchproduct = df_researchproduct.explode('measure').reset_index(drop=True)
+
+    ## Paso 3: Normalizar la columna 'measure' en nuevas columnas
+    measure_expanded = pd.json_normalize(df_researchproduct["measure"])
+
+    ## Paso 4: Concatenar asegurando que los índices están alineados
+    df_researchproduct2measure = pd.concat([df_researchproduct, measure_expanded], axis=1)
+    df_researchproduct2measure.drop(columns='measure', inplace=True)
+    df_researchproduct['load_datetime'] = date.today()
+    return df_researchproduct2measure
+
+
+def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
+
+    ## Paso 1: Seleccionar columnas con identificador y pid
+    df_researchproduct = df.loc[:,['dri:objIdentifier', 'pid']]
+    df_researchproduct = df_researchproduct.convert_dtypes()
+
+    ## Paso 2: Asegurarse de que 'pid' sea un diccionario o lista
+    df_researchproduct['pid'] = df_researchproduct['pid'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    df_researchproduct['pid'] = df_researchproduct['pid'].apply(lambda x: [x] if not isinstance(x, list) else x)
+
+    ## Paso 3: Explode la columna 'pid' y reinicia el índice
+    df_researchproduct = df_researchproduct.explode('pid').reset_index(drop=True)
+
+    ## Paso 4: Normalizar la columna 'pid' en nuevas columnas
+    pid_expanded = pd.json_normalize(df_researchproduct["pid"])
+
+    ## Paso 5: Eliminar columnas no deseadas de 'pid'
+    pid_expanded.drop(columns=['@classname', '@schemeid', '@schemename', '@inferred', '@provenanceaction', '@trust'], inplace=True)
+
+    ## Paso 6: Concatenar asegurando que los índices están alineados
+    df_researchproduct2pid = pd.concat([df_researchproduct, pid_expanded], axis=1)
+    df_researchproduct2pid.drop(columns='pid', inplace=True)
+
+    ## Paso 7: Agrego load_datetime 
+    df_researchproduct['load_datetime'] = date.today() 
+    return df_researchproduct2pid
