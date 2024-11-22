@@ -137,7 +137,9 @@ def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
     ## Paso 4: Concatenar asegurando que los índices están alineados
     df_researchproduct2measure = pd.concat([df_researchproduct, measure_expanded], axis=1)
     df_researchproduct2measure.drop(columns='measure', inplace=True)
-    df_researchproduct['load_datetime'] = date.today()
+
+    # Paso 5: Agrego load_datetime
+    df_researchproduct2measure['load_datetime'] = date.today()
     return df_researchproduct2measure
 
 
@@ -165,5 +167,5 @@ def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
     df_researchproduct2pid.drop(columns='pid', inplace=True)
 
     ## Paso 7: Agrego load_datetime 
-    df_researchproduct['load_datetime'] = date.today() 
+    df_researchproduct2pid['load_datetime'] = date.today() 
     return df_researchproduct2pid
