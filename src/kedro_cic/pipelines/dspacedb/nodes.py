@@ -37,6 +37,7 @@ def fetch_dspacedb(item, metadatavalue, metadatafieldregistry, metadataschemareg
 def land_dspacedb(item, metadatavalue, metadatafieldregistry, metadataschemaregistry):
     df_item = item
     df_metadatavalue = metadatavalue
+    df_metadatavalue['text_value'] = df_metadatavalue['text_value'].str.strip()
     df_metadatafieldregistry = metadatafieldregistry
     df_metadataschemaregistry = metadataschemaregistry
     return df_item, df_metadatavalue, df_metadatafieldregistry, df_metadataschemaregistry
