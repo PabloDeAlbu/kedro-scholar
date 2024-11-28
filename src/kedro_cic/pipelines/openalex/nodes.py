@@ -81,6 +81,7 @@ def land_work_dimensions_openalex(df_worktype, df_language, df_license):
     return df_worktype, df_language, df_license
 
 def land_work_openalex(df_work_raw):
+    return df_work_raw
     df_work_raw = df_work_raw.convert_dtypes()
     df_work = df_work_raw.select_dtypes(exclude=['object'])
     df_work.reset_index(drop=True, inplace=True)
@@ -110,6 +111,14 @@ def land_work_openalex(df_work_raw):
 
     # flat "cited_by_percentile_year"
     df_cited_by_percentile_year = json_normalize(df_work_raw['cited_by_percentile_year'])
+
+    #FutureWarning: A value is trying to be set on a copy of a DataFrame or Series through chained     warnings.py:109
+    # assignment using an inplace method.
+    # The behavior will change in pandas 3.0. This inplace method will never work because the intermediate object on which we are setting values always behaves as a
+    # copy.
+    # For example, when doing 'df[col].method(value, inplace=True)', try using 'df.method({col: value}, inplace=True)' or df[col] = df[col].method(value) instead, to
+    # perform the operation inplace on the original object.
+
     df_cited_by_percentile_year['max'].fillna(0, inplace=True)
     df_cited_by_percentile_year['min'].fillna(0, inplace=True)
     df_cited_by_percentile_year = df_cited_by_percentile_year.add_prefix('cited_by_percentile_year_')

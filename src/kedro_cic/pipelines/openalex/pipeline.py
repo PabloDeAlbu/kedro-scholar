@@ -48,7 +48,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="land_work_openalex",
             func=land_work_openalex,
             inputs='raw/openalex/work#parquet',
-            outputs=['ldg/openalex/work','ldg/openalex/work_duplicated']
+            outputs='ldg/openalex/work'
             ),
         node(
             name="land_work2authorship_openalex",
