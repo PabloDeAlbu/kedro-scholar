@@ -118,7 +118,7 @@ def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_researchproduct
 
-def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
+def land_researchproduct2creator_openaire(df: pd.DataFrame)-> pd.DataFrame:
     ## Paso 0: Seleccionar columnas con identificador y 'creator'
     df_researchproduct = df.loc[:, ['dri:objIdentifier', 'creator']]
     df_researchproduct = df_researchproduct.convert_dtypes()
@@ -194,7 +194,7 @@ def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
     df_researchproduct2pid['load_datetime'] = date.today() 
     return df_researchproduct2pid
 
-def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
+def land_researchproduct2relevantdate_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
     ## Paso 0: Seleccionar columnas con identificador y 'relevantdate'
     df_researchproduct = df.loc[:, ['dri:objIdentifier', 'relevantdate']]
@@ -219,7 +219,7 @@ def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_researchproduct2relevantdate
 
-def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
+def land_researchproduct2subject_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
     ## Paso 0: Seleccionar columnas con identificador y 'subject'
     df_researchproduct = df.loc[:, ['dri:objIdentifier', 'subject']]
