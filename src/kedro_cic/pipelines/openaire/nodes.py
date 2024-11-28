@@ -119,6 +119,30 @@ def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
     return df_researchproduct
 
 def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
+    ## Paso 0: Seleccionar columnas con identificador y 'creator'
+    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'creator']]
+    df_researchproduct = df_researchproduct.convert_dtypes()
+
+    ## Paso 1: Asegurarse de que 'creator' sea un diccionario o lista
+    df_researchproduct['creator'] = df_researchproduct['creator'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    df_researchproduct['creator'] = df_researchproduct['creator'].apply(lambda x: [x] if not isinstance(x, list) else x)
+
+    ## Paso 2: Explode la columna 'creator' y reinicia el índice
+    df_researchproduct = df_researchproduct.explode('creator').reset_index(drop=True)
+
+    ## Paso 3: Normalizar la columna 'creator' en nuevas columnas
+    creator_expanded = pd.json_normalize(df_researchproduct["creator"])
+
+    ## Paso 4: Concatenar df_researchproduct con df_creator asegurando que los índices están alineados
+    df_researchproduct2creator = pd.concat([df_researchproduct, creator_expanded], axis=1)
+    df_researchproduct2creator.drop(columns='creator', inplace=True)
+
+    ## Paso 5: Agrego load_datetime
+    df_researchproduct2creator['load_datetime'] = date.today()
+
+    return df_researchproduct2creator
+
+def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
     ## Paso 0: Seleccionar columnas con identificador y 'measure'
     df_researchproduct = df.loc[:, ['dri:objIdentifier', 'measure']]
@@ -169,3 +193,53 @@ def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
     ## Paso 7: Agrego load_datetime 
     df_researchproduct2pid['load_datetime'] = date.today() 
     return df_researchproduct2pid
+
+def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
+
+    ## Paso 0: Seleccionar columnas con identificador y 'relevantdate'
+    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'relevantdate']]
+    df_researchproduct = df_researchproduct.convert_dtypes()
+
+    ## Paso 1: Asegurarse de que 'relevantdate' sea un diccionario o lista
+    df_researchproduct['relevantdate'] = df_researchproduct['relevantdate'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    df_researchproduct['relevantdate'] = df_researchproduct['relevantdate'].apply(lambda x: [x] if not isinstance(x, list) else x)
+
+    ## Paso 2: Explode la columna 'relevantdate' y reinicia el índice
+    df_researchproduct = df_researchproduct.explode('relevantdate').reset_index(drop=True)
+
+    ## Paso 3: Normalizar la columna 'measure' en nuevas columnas
+    relevantdate_expanded = pd.json_normalize(df_researchproduct["relevantdate"])
+
+    ## Paso 4: Concatenar df_researchproduct con df_relevantdate asegurando que los índices están alineados
+    df_researchproduct2relevantdate = pd.concat([df_researchproduct, relevantdate_expanded], axis=1)
+    df_researchproduct2relevantdate.drop(columns='relevantdate', inplace=True)
+
+    ## Paso 5: Agrego load_datetime
+    df_researchproduct2relevantdate['load_datetime'] = date.today()
+
+    return df_researchproduct2relevantdate
+
+def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
+
+    ## Paso 0: Seleccionar columnas con identificador y 'subject'
+    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'subject']]
+    df_researchproduct = df_researchproduct.convert_dtypes()
+
+    ## Paso 1: Asegurarse de que 'subject' sea un diccionario o lista
+    df_researchproduct['subject'] = df_researchproduct['subject'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    df_researchproduct['subject'] = df_researchproduct['subject'].apply(lambda x: [x] if not isinstance(x, list) else x)
+
+    ## Paso 2: Explode la columna 'subject' y reinicia el índice
+    df_researchproduct = df_researchproduct.explode('subject').reset_index(drop=True)
+
+    ## Paso 3: Normalizar la columna 'measure' en nuevas columnas
+    subject_expanded = pd.json_normalize(df_researchproduct["subject"])
+
+    ## Paso 4: Concatenar df_researchproduct con df_subject asegurando que los índices están alineados
+    df_researchproduct2subject = pd.concat([df_researchproduct, subject_expanded], axis=1)
+    df_researchproduct2subject.drop(columns='subject', inplace=True)
+
+    ## Paso 5: Agrego load_datetime
+    df_researchproduct2subject['load_datetime'] = date.today()
+
+    return df_researchproduct2subject
