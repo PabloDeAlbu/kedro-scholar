@@ -111,6 +111,11 @@ def fetch_work_dimensions_openalex():
 
     return df_worktype, df_language, df_license
 
+def land_author_openalex(df: pd.DataFrame)-> pd.DataFrame:
+    df = df.convert_dtypes()
+    df['load_datetime'] = date.today()
+    return df
+
 def land_work_dimensions_openalex(df_worktype, df_language, df_license):
     df_worktype['load_datetime'] = date.today()
     df_language['load_datetime'] = date.today()

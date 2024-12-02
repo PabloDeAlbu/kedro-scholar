@@ -3,6 +3,7 @@ from .nodes import (
     fetch_author_openalex,
     fetch_work_openalex,
     fetch_work_dimensions_openalex,
+    land_author_openalex,
     land_work_openalex,
     land_work2authorship_openalex,
     land_work2location_openalex,
@@ -53,6 +54,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:fetch_options.env",
             ],
             outputs="raw/openalex/author#parquet",
+            ),
+        node(
+            name="land_author_openalex",
+            func=land_author_openalex,
+            inputs='raw/openalex/author#parquet',
+            outputs='ldg/openalex/author'
             ),
         node(
             name="land_work_openalex",
