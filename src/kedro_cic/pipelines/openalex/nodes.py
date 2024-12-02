@@ -3,6 +3,48 @@ import requests
 from datetime import date
 from pandas import json_normalize
 
+def fetch_author_openalex(institution_ror, env):
+    cursor = '*'
+    base_url = 'https://api.openalex.org/authors?filter=affiliations.institution.ror:{}&cursor={}'
+    iteration_limit = 5
+    iteration_count = 0
+
+    url = base_url.format(institution_ror, cursor)
+    api_response = requests.get(url).json()
+
+    print(f'Iteration count: {iteration_count}')
+    print(f'GET {url}')
+
+    # creo dataframe con las columnas del primer resultado 
+    df = pd.DataFrame.from_dict(api_response['results'])
+
+    # update cursor
+    cursor = api_response['meta']['next_cursor']
+    url = base_url.format(institution_ror, cursor)
+
+    while cursor:
+
+        if env == 'dev' and iteration_count >= iteration_limit:
+            break
+
+        # request api with updated cursor
+        url = base_url.format(institution_ror, cursor)
+
+        iteration_count += 1
+        print(f'Iteration count: {iteration_count}')
+        print(f'GET {url}')
+
+        api_response = requests.get(url).json()
+
+        df_tmp = pd.DataFrame.from_dict(api_response['results'])
+
+        df = pd.concat([df, df_tmp])
+
+        # update cursor
+        cursor = api_response['meta']['next_cursor']
+
+    return df
+
 def fetch_work_openalex(institution_ror, env):
     cursor = '*'
     base_url = 'https://api.openalex.org/works?filter=institutions.ror:{}&cursor={}'
