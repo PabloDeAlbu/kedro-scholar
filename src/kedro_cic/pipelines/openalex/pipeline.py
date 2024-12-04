@@ -46,7 +46,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_fetch_options.institution_ror",
                 "params:fetch_options.env",
             ],
-            outputs="raw/openalex/work#parquet",
+            outputs=["raw/openalex/work#parquet","raw/openalex/work_dev"],
             ),
         node(
             name="fetch_author_openalex",

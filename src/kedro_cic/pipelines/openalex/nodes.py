@@ -85,8 +85,7 @@ def fetch_work_openalex(institution_ror, env):
         # update cursor
         cursor = api_response['meta']['next_cursor']
 
-
-    return df
+    return df, df.head(1000)
 
 def fetch_work_dimensions_openalex():
     base_url = 'https://api.openalex.org/works?group_by={}'
