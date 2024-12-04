@@ -4,6 +4,8 @@ from .nodes import (
     fetch_work_openalex,
     fetch_work_dimensions_openalex,
     land_author_openalex,
+    land_author2affiliation_openalex,
+    land_author2topic_openalex,
     land_work_openalex,
     land_work2authorship_openalex,
     land_work2location_openalex,
@@ -60,6 +62,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=land_author_openalex,
             inputs='raw/openalex/author#parquet',
             outputs='ldg/openalex/author'
+            ),
+        node(
+            name="land_author2affiliation_openalex",
+            func=land_author2affiliation_openalex,
+            inputs='raw/openalex/author#parquet',
+            outputs='ldg/openalex/author2affiliation'
+            ),
+        node(
+            name="land_author2topic_openalex",
+            func=land_author2topic_openalex,
+            inputs='raw/openalex/author#parquet',
+            outputs='ldg/openalex/author2topic'
             ),
         node(
             name="land_work_openalex",

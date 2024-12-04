@@ -112,9 +112,71 @@ def fetch_work_dimensions_openalex():
     return df_worktype, df_language, df_license
 
 def land_author_openalex(df: pd.DataFrame)-> pd.DataFrame:
-    df = df.convert_dtypes()
-    df['load_datetime'] = date.today()
-    return df
+    
+    df_author = df.drop(
+        columns=[
+            'display_name_alternatives', 
+            'summary_stats', 
+            'ids', 
+            'affiliations', 
+            'last_known_institutions', 
+            'topics', 
+            'topic_share', 
+            'x_concepts', 
+            'counts_by_year', 
+            'works_api_url'
+        ]
+    )
+
+    df_author = df_author.convert_dtypes()
+    df_author['load_datetime'] = date.today()
+    
+    return df_author
+
+def land_author2affiliation_openalex(df: pd.DataFrame)-> pd.DataFrame:
+
+    # Selecciono columna con id de author y afiliación
+    df_author = df.loc[:, ['id', 'affiliations']]
+    df_author = df_author.convert_dtypes()
+
+    # Proceso columna 'affiliations'
+    df_author = df_author.explode('affiliations').reset_index(drop=True)
+    affiliation_expanded = pd.json_normalize(df_author["affiliations"])
+    affiliation_expanded = affiliation_expanded.loc[:,['institution.id','years']]
+
+    df_author2affiliation = pd.concat([df_author, affiliation_expanded], axis=1)
+    df_author2affiliation.drop(columns=["affiliations"], inplace=True)
+    df_author2affiliation = df_author2affiliation.explode('years')
+
+    df_author2affiliation.rename(columns={'institution.id':'institution_id'}, inplace=True)
+    df_author2affiliation = df_author2affiliation.convert_dtypes()
+
+    df_author2affiliation['load_datetime'] = date.today()
+    
+    return df_author2affiliation
+
+def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
+    
+    df_author = df.loc[:,['id', 'topics']]
+    df_author = df_author.convert_dtypes() 
+    
+    # proceso 'topics'
+    df_author2topic_exploded = df_author.explode('topics').reset_index(drop=True)
+    
+    df_author2topic_norm = pd.json_normalize(df_author2topic_exploded['topics'])
+    df_author2topic_norm = df_author2topic_norm.loc[:,['count','id','domain.id','field.id','subfield.id']]
+    df_author2topic_norm = df_author2topic_norm.rename(columns={'id':'id_topic'})
+
+    df_author2topic = pd.concat([df_author2topic_exploded, df_author2topic_norm], axis=1)
+    df_author2topic = df_author2topic.drop(columns=['topics'])
+
+    df_author2topic.rename(columns={'domain.id':'domain_id'}, inplace=True)
+    df_author2topic.rename(columns={'field.id':'field_id'}, inplace=True)
+    df_author2topic.rename(columns={'subfield.id':'subfield_id'}, inplace=True)
+
+    df_author2topic['load_datetime'] = date.today()
+    return df_author2topic
+
 
 def land_work_dimensions_openalex(df_worktype, df_language, df_license):
     df_worktype['load_datetime'] = date.today()
