@@ -190,109 +190,35 @@ def land_work_dimensions_openalex(df_worktype, df_language, df_license):
     return df_worktype, df_language, df_license
 
 def land_work_openalex(df_work_raw):
-    return df_work_raw
-    df_work_raw = df_work_raw.convert_dtypes()
-    df_work = df_work_raw.select_dtypes(exclude=['object'])
-    df_work.reset_index(drop=True, inplace=True)
-
-    # flat "ids"
-    df_ids = json_normalize(df_work_raw['ids'])
-    df_ids.drop(columns=['doi','openalex'], inplace=True)
-    df_ids = df_ids.convert_dtypes()
-    df_ids.fillna('NO DATA', inplace=True)
-
-    df_work = pd.concat([df_work,df_ids], axis=1)
-    df_work['doi'] = '10.' + df_work['doi'].str.extract(r'10\.(.*)')[0].str.lower()
-
-    # flat "biblio"
-    df_biblio = json_normalize(df_work_raw['biblio'])
-    df_biblio = df_biblio.add_prefix('biblio_')
-    df_biblio = df_biblio.convert_dtypes()
-    df_biblio.fillna('NO DATA', inplace=True)
-
-    df_work = df_work.join(df_biblio)
-
-    # flat "open_access"
-    df_open_access = json_normalize(df_work_raw['open_access'])
-    df_open_access = df_open_access.convert_dtypes()
-    df_open_access.fillna('NO DATA', inplace=True)
-    df_work = df_work.join(df_open_access)
-
-    # flat "cited_by_percentile_year"
-    df_cited_by_percentile_year = json_normalize(df_work_raw['cited_by_percentile_year'])
-
-    #FutureWarning: A value is trying to be set on a copy of a DataFrame or Series through chained     warnings.py:109
-    # assignment using an inplace method.
-    # The behavior will change in pandas 3.0. This inplace method will never work because the intermediate object on which we are setting values always behaves as a
-    # copy.
-    # For example, when doing 'df[col].method(value, inplace=True)', try using 'df.method({col: value}, inplace=True)' or df[col] = df[col].method(value) instead, to
-    # perform the operation inplace on the original object.
-
-    df_cited_by_percentile_year['max'].fillna(0, inplace=True)
-    df_cited_by_percentile_year['min'].fillna(0, inplace=True)
-    df_cited_by_percentile_year = df_cited_by_percentile_year.add_prefix('cited_by_percentile_year_')
-    df_cited_by_percentile_year.fillna('NO DATA', inplace=True)
-    df_cited_by_percentile_year = df_cited_by_percentile_year.convert_dtypes()
-    df_work = df_work.join(df_cited_by_percentile_year)
-
-    # citation_normalized_percentile
-    df_cnp = json_normalize(df_work_raw['citation_normalized_percentile'])
-    # fillna citation_normalized_percentile
-    df_cnp['is_in_top_10_percent'].fillna('NO DATA', inplace=True)
-    df_cnp['is_in_top_1_percent'].fillna('NO DATA', inplace=True)
-    df_cnp['value'].fillna(0, inplace=True)
-    # add prefix
-    df_cnp = df_cnp.add_prefix('citation_normalized_percentile_')
-    # convert_dtypes
-    df_cnp = df_cnp.convert_dtypes()
-    # join to df_work
-    df_work = df_work.join(df_cnp)
-
-    # apc_list
-    df_apc_list = json_normalize(df_work_raw['apc_list'])
-    df_apc_list['currency'].fillna('NO DATA', inplace=True)
-    df_apc_list['provenance'].fillna('NO DATA', inplace=True)
-    df_apc_list['value'].fillna(0, inplace=True)
-    df_apc_list['value_usd'].fillna(0, inplace=True)
-    df_apc_list = df_apc_list.add_prefix('apc_list_')
-    df_apc_list = df_apc_list.convert_dtypes()
-    df_work = df_work.join(df_apc_list)
-
-    # apc_paid
-    df_apc_paid = json_normalize(df_work_raw['apc_paid'])
-    df_apc_paid['currency'].fillna('NO DATA', inplace=True)
-    df_apc_paid['provenance'].fillna('NO DATA', inplace=True)
-    df_apc_paid['value'].fillna(0, inplace=True)
-    df_apc_paid['value_usd'].fillna(0, inplace=True)
-    df_apc_paid = df_apc_paid.add_prefix('apc_paid_')
-    df_apc_paid = df_apc_paid.convert_dtypes()
-    df_work = df_work.join(df_apc_paid)
-
-    # flat indexed_in
-    df_work_indexed = pd.DataFrame()
-    sources = ['arxiv', 'doaj', 'crossref', 'pubmed']
-    for source in sources:
-        df_work_indexed[f'indexed_in_{source}'] = df_work_raw['indexed_in'].apply(lambda x: source in x).astype(bool)
-
-    df_work_indexed.reset_index(drop=True, inplace=True)
-
-    df_work = pd.concat([df_work,df_work_indexed], axis=1)
-
-    # rename de cols
-    df_work.columns = df_work.columns.str.replace('.', '_')
-    df_work.rename(columns={'id':'work_id'}, inplace=True)
-
-    df_work['load_datetime'] = date.today()
-
-    filter = df_work['work_id'].duplicated()
-    duplicated_id = df_work[filter]['work_id']
-    print('duplicated ids:\n',duplicated_id)
-
-    duplicated_filter = df_work['work_id'].isin(duplicated_id)
-    df_work[duplicated_filter]
-
-    return df_work[~duplicated_filter], df_work[duplicated_filter]
-
+    df_work = df_work_raw.loc[:,
+        [
+            'id',
+            'doi',
+            'title',
+            'display_name',
+            'publication_year',
+            'publication_date',
+            'language',
+            'type',
+            'type_crossref',
+            'countries_distinct_count',
+            'institutions_distinct_count',
+            'fwci',
+            'has_fulltext',
+            'fulltext_origin',
+            'cited_by_count',
+            'is_retracted',
+            'is_paratext',
+            'locations_count',
+            'referenced_works_count',
+            'cited_by_api_url',
+            'updated_date',
+            'created_date'
+        ]
+    ]
+    df_work = df_work.convert_dtypes()
+    df_work
+    return df_work
 
 def land_work2authorship_openalex(df_work_raw):
 
