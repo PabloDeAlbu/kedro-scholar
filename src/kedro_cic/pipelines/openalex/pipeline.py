@@ -7,7 +7,16 @@ from .nodes import (
     land_author2affiliation_openalex,
     land_author2topic_openalex,
     land_work_openalex,
-    land_work2authorship_openalex,
+    land_work2apc_list_openalex,
+    land_work2apc_paid_openalex,
+    land_work2authorships_openalex,
+    land_work2ids_openalex,
+    land_work2concepts_openalex,
+    land_work2corresponding_author_ids_openalex,
+    land_work2primary_topic_openalex,
+    land_work2primary_location_openalex,
+    land_work2referenced_works_openalex,
+    land_work2topics_openalex,
     land_work2location_openalex,
     land_work_dimensions_openalex,
 )
@@ -46,7 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_fetch_options.institution_ror",
                 "params:fetch_options.env",
             ],
-            outputs=["raw/openalex/work#parquet","raw/openalex/work_dev"],
+            outputs=["raw/openalex/work#parquet","raw/openalex/work_dev#parquet"],
             ),
         node(
             name="fetch_author_openalex",
@@ -82,10 +91,64 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs='ldg/openalex/work'
             ),
         node(
-            name="land_work2authorship_openalex",
-            func=land_work2authorship_openalex,
+            name="land_work2apc_list_openalex",
+            func=land_work2apc_list_openalex,
             inputs='raw/openalex/work#parquet',
-            outputs='ldg/openalex/work2authorship'
+            outputs='ldg/openalex/work2apc_list'
+            ),
+        node(
+            name="land_work2apc_paid_openalex",
+            func=land_work2apc_paid_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2apc_paid'
+            ),
+        node(
+            name="land_work2authorships_openalex",
+            func=land_work2authorships_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs=['ldg/openalex/df_work2author', 'ldg/openalex/df_author2institution']
+            ),
+        node(
+            name="land_work2ids_openalex",
+            func=land_work2ids_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2ids'
+            ),
+        node(
+            name="land_work2concepts_openalex",
+            func=land_work2concepts_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2concepts'
+            ),
+        node(
+            name="land_work2corresponding_author_ids_openalex",
+            func=land_work2corresponding_author_ids_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2corresponding_author_ids'
+            ),
+        node(
+            name="land_work2primary_topic_openalex",
+            func=land_work2primary_topic_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2primary_topics'
+            ),
+        node(
+            name="land_work2primary_location_openalex",
+            func=land_work2primary_location_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2primary_location'
+            ),
+        node(
+            name="land_work2referenced_works_openalex",
+            func=land_work2referenced_works_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2referenced_works'
+            ),
+        node(
+            name="land_work2topics_openalex",
+            func=land_work2topics_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work2topics'
             ),
         node(
             name="land_work2location_openalex",

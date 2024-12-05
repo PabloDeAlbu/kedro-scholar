@@ -215,39 +215,156 @@ def land_work_openalex(df_work_raw):
             'created_date'
         ]
     ]
+
     df_work = df_work.convert_dtypes()
-    df_work
+    df_work.rename(columns={'id':'work_id'}, inplace=True)
+    
     return df_work
 
-def land_work2authorship_openalex(df_work_raw):
+def land_work2apc_list_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','apc_list']]
+    df_work = df_work.convert_dtypes()
 
-    df_work = df_work_raw.convert_dtypes()
-    df_work = df_work.loc[:,['id','authorships']]
+    df_work2apc_list = pd.json_normalize(df_work['apc_list'])
+    df_work2apc_list = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_list), axis=1)
+    
+    # Rename de columnas
+    df_work2apc_list.rename(columns={'id': 'work_id'}, inplace=True)
 
-    df_work_authorship = df_work.explode('authorships').reset_index(drop=True)
+    return df_work2apc_list
 
-    # Normalizar el JSON de la columna 'authorships' y mantener la asociación con 'id'
-    df_work_authorship = pd.concat([df_work_authorship['id'], json_normalize(df_work_authorship['authorships'])], axis=1)
+def land_work2apc_paid_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','apc_paid']]
+    df_work = df_work.convert_dtypes()
 
-    # remove affiliations.
-    # https://docs.openalex.org/api-entities/works/work-object/authorship-object#affiliations
-    #   "This information will be redundant with institutions below, but is useful if you need to know about what we used to match institutions."
-    df_work_authorship.drop(columns=['affiliations'], inplace=True)
+    df_work2apc_paid = pd.json_normalize(df_work['apc_paid'])
+    df_work2apc_paid = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_paid), axis=1)
 
-    df_work_authorship = df_work_authorship.explode('institutions').reset_index(drop=True)
-    df_institution = json_normalize(df_work_authorship['institutions'])
-    df_institution = df_institution.add_prefix('institution_')
-    df_work_authorship = pd.concat((df_work_authorship.drop(columns=['institutions']), df_institution), axis=1)
+    # Rename de columnas
+    df_work2apc_paid.rename(columns={'id': 'work_id'}, inplace=True)
 
-    df_work_authorship.columns = df_work_authorship.columns.str.replace('.', '_')
+    return df_work2apc_paid
 
-    df_work_authorship = df_work_authorship[['id','author_id','author_display_name','author_orcid','author_position','is_corresponding','institution_id','institution_display_name','institution_ror','institution_type','institution_country_code']]
+def land_work2authorships_openalex(df_work_raw):
+    df_work2authorships = df_work_raw.loc[:,['id','authorships']]
+    df_work2authorships = df_work2authorships.convert_dtypes()
+    df_work2authorships.rename(columns={"id":'work_id'}, inplace=True)
 
-    df_work_authorship.rename(columns={'id':'work_id'}, inplace=True)
+    df_work2authorships_exploded = df_work2authorships.explode('authorships').reset_index(drop=True)
+    df_work2authorships_norm =  pd.json_normalize(df_work2authorships_exploded['authorships'])
+    df_work2authorships_norm.rename(columns={"author.id":'author_id'}, inplace=True)
+    
+    df_work = df_work2authorships_exploded.loc[:,'work_id']
+    df_work2authorships = pd.concat((df_work, df_work2authorships_norm), axis=1)
 
-    df_work_authorship['load_datetime'] = date.today()
+    df_work2author = df_work2authorships.loc[:,['work_id','author_id','author_position']]
+    df_author2institution_exploded = df_work2authorships.loc[:,['author_id','institutions']].explode('institutions').reset_index(drop=True)
 
-    return df_work_authorship
+    df_author = df_author2institution_exploded.loc[:,'author_id']
+    df_institution_norm = pd.json_normalize(df_author2institution_exploded['institutions'])
+    df_institution_norm.drop(columns=['lineage'], inplace=True)
+    df_author2institution = pd.concat((df_author, df_institution_norm), axis=1)
+
+    return df_work2author, df_author2institution
+
+def land_work2ids_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','ids']]
+    df_work = df_work.convert_dtypes()
+
+    df_work2ids = pd.json_normalize(df_work['ids'])
+    return df_work2ids
+
+def land_work2concepts_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','concepts']]
+    df_work = df_work.convert_dtypes()
+
+    df_work2concepts_exploded = df_work.explode('concepts').reset_index(drop=True)
+    df_work2concepts_norm = pd.json_normalize(df_work2concepts_exploded['concepts'])
+    df_work2concepts_norm.rename(columns={'id':'concept_id'}, inplace=True)
+
+    df_work = df_work2concepts_exploded.loc[:,'id']
+    df_work2concepts = pd.concat((df_work, df_work2concepts_norm), axis=1)
+    
+    # Rename de columna id
+    df_work2concepts.rename(columns={'id':'work_id'}, inplace=True)
+    return df_work2concepts
+
+def land_work2corresponding_author_ids_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','corresponding_author_ids']]
+    df_work = df_work.convert_dtypes()
+
+    df_work2corresponding_author_ids_exploded = df_work.explode('corresponding_author_ids')
+    df_work2corresponding_author_ids = df_work2corresponding_author_ids_exploded.rename(columns={'id':'work_id'})
+
+    return df_work2corresponding_author_ids
+
+def land_work2primary_topic_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','primary_topic']]
+    df_work = df_work.convert_dtypes()
+    df_work2primary_topic_norm = pd.json_normalize(df_work['primary_topic']).loc[:,['id','domain.id','field.id','subfield.id']]
+
+    # 
+    df_work2primary_topic_norm.rename(columns={'id':'topic.id'}, inplace=True)
+    df_work2primary_topic = pd.concat((df_work['id'].reset_index(drop=True),df_work2primary_topic_norm), axis=1)
+
+    # Rename de columnas
+    df_work2primary_topic.rename(columns=lambda col: col.replace('.', '_'), inplace=True)
+    df_work2primary_topic.rename(columns={'id': 'work_id'}, inplace=True)
+
+
+    return df_work2primary_topic
+
+def land_work2primary_location_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','primary_location']]
+    df_work = df_work.convert_dtypes()
+
+    df_work2primarylocation = pd.json_normalize(df_work['primary_location'])
+    df_work2primarylocation.drop(columns=
+        [
+            'source.host_organization_lineage',
+            'source.host_organization_lineage_names',
+            'source.issn'
+        ],
+        inplace=True
+    )
+
+    df_work = df_work['id'].reset_index(drop=True)
+    df_work2primarylocation = pd.concat((df_work, df_work2primarylocation), axis=1)
+
+    df_work2primarylocation.rename(columns={'id':'work_id'}, inplace=True)
+
+    return df_work2primarylocation
+
+def land_work2referenced_works_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','referenced_works']]
+    df_work = df_work.convert_dtypes()
+    df_work2referenced_works_exploded =  df_work.explode('referenced_works')
+    df_work2referenced_works = df_work2referenced_works_exploded.reset_index(drop=True)
+
+    # Reemplazar '.' por '_' en los nombres de las columnas
+    df_work2referenced_works.rename(columns={'id': 'work_id'})
+
+    return df_work2referenced_works
+
+
+def land_work2topics_openalex(df_work_raw):
+    df_work = df_work_raw.loc[:,['id','topics']]
+    df_work = df_work.convert_dtypes()
+    
+    # Proceso topics
+    df_work2topics_exploded = df_work.explode('topics')
+    df_work2topics_norm = pd.json_normalize(df_work2topics_exploded['topics'])
+    df_work2topics_exploded = df_work2topics_exploded.reset_index(drop=True)
+    df_work2topics_norm.rename(columns={'id':'topic_id'}, inplace=True)
+   
+    # Creación de df con work y sus topics
+    df_work2topics = pd.concat((df_work2topics_exploded['id'], df_work2topics_norm), axis=1)
+
+    # Rename de columnas
+    df_work2topics.rename(columns=lambda col: col.replace('.', '_'), inplace=True)
+    df_work2topics.rename(columns={'id': 'work_id'}, inplace=True)
+
+    return df_work2topics
 
 def land_work2location_openalex(df_work_raw):
 
