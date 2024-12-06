@@ -103,7 +103,6 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             name="land_work2authorships_openalex",
             func=land_work2authorships_openalex,
-            func=land_work2authorships_openalex,
             inputs='raw/openalex/work#parquet',
             outputs=['ldg/openalex/work2author', 'ldg/openalex/author2institution']
             ),
