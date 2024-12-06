@@ -23,30 +23,6 @@ from .nodes import (
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
         node(
-            name="fetch_work_dimensions_openalex",
-            func=fetch_work_dimensions_openalex,
-            inputs=[],
-            outputs=[
-                "raw/openalex/worktype#parquet",
-                "raw/openalex/language#parquet",
-                "raw/openalex/license#parquet",
-                ],
-            ),
-        node(
-            name="land_work_dimensions_openalex",
-            func=land_work_dimensions_openalex,
-            inputs=[
-                "raw/openalex/worktype#parquet",
-                "raw/openalex/language#parquet",
-                "raw/openalex/license#parquet",
-            ],
-            outputs=[
-                "ldg/openalex/worktype",
-                "ldg/openalex/language",
-                "ldg/openalex/license",
-                ],
-            ),
-        node(
             name="fetch_work_openalex",
             func=fetch_work_openalex,
             inputs=[
