@@ -78,7 +78,11 @@ def fetch_work_openalex(institution_ror, env):
 
         api_response = requests.get(url).json()
 
-        df_tmp = pd.DataFrame.from_dict(api_response['results'])
+        df_tmp = pd.DataFrame.from_dict(api_response['results'])       
+
+        if "abstract_inverted_index" in df_tmp.columns:
+            df_tmp.drop(columns=["abstract_inverted_index"], inplace=True)
+
 
         df = pd.concat([df, df_tmp])
 
