@@ -2,7 +2,6 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     fetch_author_openalex,
     fetch_work_openalex,
-    fetch_work_dimensions_openalex,
     land_author_openalex,
     land_author2affiliation_openalex,
     land_author2topic_openalex,
@@ -18,7 +17,6 @@ from .nodes import (
     land_work2referenced_works_openalex,
     land_work2topics_openalex,
     land_work2location_openalex,
-    land_work_dimensions_openalex,
 )
 
 
@@ -105,6 +103,12 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             name="land_work2authorships_openalex",
             func=land_work2authorships_openalex,
+            func=land_work2authorships_openalex,
+            inputs='raw/openalex/work#parquet',
+            outputs=['ldg/openalex/work2author', 'ldg/openalex/author2institution']
+            ),
+        node(
+            name="land_work2ids_openalex",
             inputs='raw/openalex/work#parquet',
             outputs=['ldg/openalex/work2author', 'ldg/openalex/author2institution']
             ),

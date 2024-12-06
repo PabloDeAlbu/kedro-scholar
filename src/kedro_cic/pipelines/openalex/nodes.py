@@ -91,29 +91,6 @@ def fetch_work_openalex(institution_ror, env):
 
     return df, df.head(1000)
 
-def fetch_work_dimensions_openalex():
-    base_url = 'https://api.openalex.org/works?group_by={}'
-
-    group_by_attribute = 'type'
-    url = base_url.format(group_by_attribute)
-    api_response = requests.get(url).json()
-    print(f'GET {url}')
-    df_worktype = pd.DataFrame.from_dict(api_response['group_by'])
-
-    group_by_attribute = 'language'
-    url = base_url.format(group_by_attribute)
-    api_response = requests.get(url).json()
-    print(f'GET {url}')
-    df_language = pd.DataFrame.from_dict(api_response['group_by'])
-
-    group_by_attribute = 'primary_location.license'
-    url = base_url.format(group_by_attribute)
-    api_response = requests.get(url).json()
-    print(f'GET {url}')
-    df_license = pd.DataFrame.from_dict(api_response['group_by'])
-
-    return df_worktype, df_language, df_license
-
 def land_author_openalex(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.drop(
@@ -179,18 +156,6 @@ def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
 
     df_author2topic['load_datetime'] = date.today()
     return df_author2topic
-
-
-def land_work_dimensions_openalex(df_worktype, df_language, df_license):
-    df_worktype['load_datetime'] = date.today()
-    df_language['load_datetime'] = date.today()
-    df_license['load_datetime'] = date.today()
-
-    df_worktype.rename(columns={'key':'worktype_id','key_display_name':'worktype_display_name'}, inplace=True)
-    df_language.rename(columns={'key':'language_id','key_display_name':'language_display_name'}, inplace=True)
-    df_license.rename(columns={'key':'license_id','key_display_name':'license_display_name'}, inplace=True)
-
-    return df_worktype, df_language, df_license
 
 def land_work_openalex(df_work_raw):
     df_work = df_work_raw.loc[:,
