@@ -87,10 +87,6 @@ def fetch_dspacedb(df_bitstream, df_bundle, df_bundle2bitstream, df_collection, 
 
     return df_bitstream, df_bundle, df_bundle2bitstream, df_collection, df_collection2item, df_community, df_community2collection, df_community2community, df_doi, df_eperson, df_epersongroup, df_epersongroup2eperson, df_group2group, df_handle, df_item, df_item2bundle, df_metadatafieldregistry, df_metadataschemaregistry, df_metadatavalue
 
-def land_dspacedb(item, metadatavalue, metadatafieldregistry, metadataschemaregistry):
-    df_item = item
-    df_metadatavalue = metadatavalue
-    df_metadatavalue['text_value'] = df_metadatavalue['text_value'].str.strip()
-    df_metadatafieldregistry = metadatafieldregistry
-    df_metadataschemaregistry = metadataschemaregistry
-    return df_item, df_metadatavalue, df_metadatafieldregistry, df_metadataschemaregistry
+def land_dspacedb(df_bitstream, df_bundle, df_bundle2bitstream, df_collection, df_collection2item, df_community, df_community2collection, df_community2community, df_doi, df_eperson, df_epersongroup, df_epersongroup2eperson, df_group2group, df_handle, df_item, df_item2bundle, df_metadatafieldregistry, df_metadataschemaregistry, df_metadatavalue):
+    return df_bitstream, df_bundle, df_bundle2bitstream, df_collection, df_collection2item, df_community, df_community2collection, df_community2community, df_doi, df_eperson, df_epersongroup, df_epersongroup2eperson, df_group2group, df_handle, df_item, df_item2bundle, df_metadatafieldregistry, df_metadataschemaregistry, df_metadatavalue
+
