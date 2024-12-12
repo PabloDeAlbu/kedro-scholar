@@ -25,7 +25,6 @@ def fetch_dspacedb(df_bitstream, df_bundle, df_bundle2bitstream, df_collection, 
 
     df_collection2item['collection_id'] = df_collection2item['collection_id'].astype(str)
     df_collection2item['item_id'] = df_collection2item['item_id'].astype(str)
-    df_collection2item.drop(columns=['logo_bitstream_id'], inplace=True)
     df_collection2item['load_datetime'] = date.today()
 
     df_community['uuid'] = df_community['uuid'].astype(str)
