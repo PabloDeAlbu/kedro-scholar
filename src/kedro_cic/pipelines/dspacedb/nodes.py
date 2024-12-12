@@ -5,7 +5,7 @@ generated using Kedro 0.19.8
 from datetime import date
 
 def fetch_dspacedb(df_bitstream, df_bundle, df_bundle2bitstream, df_collection, df_collection2item, df_community, df_community2collection, df_community2community, df_doi, df_eperson, df_epersongroup, df_epersongroup2eperson, df_group2group, df_handle, df_item, df_item2bundle, df_metadatafieldregistry, df_metadataschemaregistry, df_metadatavalue):
-    
+
     df_bitstream['uuid'] = df_item['uuid'].astype(str)
     df_bitstream['load_datetime'] = date.today()
 
@@ -32,11 +32,12 @@ def fetch_dspacedb(df_bitstream, df_bundle, df_bundle2bitstream, df_collection, 
     df_community.drop(columns=['logo_bitstream_id'], inplace=True)
     df_community['load_datetime'] = date.today()
 
+    df_community2collection['collection_id'] = df_community2collection['collection_id'].astype(str)
+    df_community2collection['community_id'] = df_community2collection['community_id'].astype(str)
     df_community2collection['load_datetime'] = date.today()
-    df_community2collection['uuid'] = df_community2collection['uuid'].astype(str)
 
-    df_community2community['uuid'] = df_community2community['uuid'].astype(str)
-    df_community2community['community_id'] = df_community2community['community_id'].astype(str)
+    df_community2community['parent_comm_id'] = df_community2community['parent_comm_id'].astype(str)
+    df_community2community['child_comm_id'] = df_community2community['child_comm_id'].astype(str)
     df_community2community['load_datetime'] = date.today()
 
     df_doi['dspace_object'] = df_doi['dspace_object'].astype(str)
@@ -61,8 +62,9 @@ def fetch_dspacedb(df_bitstream, df_bundle, df_bundle2bitstream, df_collection, 
 
     # convert df_item dtypes
     df_item = df_item.convert_dtypes()
-    df_item['uuid'] = df_item['uuid'].astype(str)    
+    df_item['uuid'] = df_item['uuid'].astype(str)
     df_item['item_id'] = df_item['item_id'].astype(str)
+    df_item['submitter_id'] = df_item['submitter_id'].astype(str)
     df_item['owning_collection'] = df_item['owning_collection'].astype(str)
     df_item['load_datetime'] = date.today()
 
