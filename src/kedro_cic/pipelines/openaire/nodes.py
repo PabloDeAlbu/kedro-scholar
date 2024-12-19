@@ -67,6 +67,7 @@ def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.Dat
     return df
 
 
+
 def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromDatasourceId, env):
     cursor = '*'
     base_url = 'https://api-beta.openaire.eu/graph/researchProducts'
@@ -80,8 +81,7 @@ def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromData
     params = {
         "relCollectedFromDatasourceId": relCollectedFromDatasourceId,  # Búsqueda por institución
         "pageSize": page_size,
-        "cursor": cursor,
-        "sortBy": "relevance DESC"
+        "cursor": cursor
     }
 
     # Primera solicitud
