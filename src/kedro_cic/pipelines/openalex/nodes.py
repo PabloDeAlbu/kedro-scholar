@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import time
 from datetime import date
 from pandas import json_normalize
 
@@ -47,7 +48,7 @@ def fetch_author_openalex(institution_ror, env):
 
 def fetch_work_openalex(institution_ror, env):
     cursor = '*'
-    base_url = 'https://api.openalex.org/works?filter=institutions.ror:{}&cursor={}'
+    base_url = 'https://api.openalex.org/works?filter=institutions.ror:{}&cursor={}&per-page=200'
     iteration_limit = 5
     iteration_count = 0
 
@@ -75,6 +76,9 @@ def fetch_work_openalex(institution_ror, env):
         iteration_count += 1
         print(f'Iteration count: {iteration_count}')
         print(f'GET {url}')
+
+        # Sleep para evitar exceder el límite de solicitudes por segundo
+        time.sleep(1)
 
         api_response = requests.get(url).json()
 
