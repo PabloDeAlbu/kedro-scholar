@@ -5,3 +5,5 @@
 # Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
 openaire_fetch_options:
     refresh_token: REPLACE_ME
+    # CIC DIGITAL source_id
+    relCollectedFromDatasourceId: opendoar____::2222f99fe4ee52bacba5f5406ff033aa

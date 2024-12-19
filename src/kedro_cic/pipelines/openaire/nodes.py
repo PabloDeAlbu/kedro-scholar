@@ -3,6 +3,7 @@ from datetime import date
 import math
 import pandas as pd
 import requests
+import time
 import xmltodict
 
 def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.DataFrame:
@@ -64,6 +65,73 @@ def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.Dat
         df = pd.DataFrame()
 
     return df
+
+
+def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromDatasourceId, env):
+    cursor = '*'
+    base_url = 'https://api-beta.openaire.eu/graph/researchProducts'
+    iteration_limit = 5
+    iteration_count = 0
+    page_size = 50  # Puedes ajustar este valor según sea necesario
+    headers = {
+        "accept": "application/json"
+    }
+
+    params = {
+        "relCollectedFromDatasourceId": relCollectedFromDatasourceId,  # Búsqueda por institución
+        "pageSize": page_size,
+        "cursor": cursor,
+        "sortBy": "relevance DESC"
+    }
+
+    # Primera solicitud
+    response = requests.get(base_url, headers=headers, params=params)
+    if response.status_code != 200:
+        raise Exception(f"Failed to retrieve data: {response.status_code}")
+
+    api_response = response.json()
+    print(f'Iteration count: {iteration_count}')
+    print(f'GET {response.url}')
+
+    # Crear DataFrame con las columnas del primer resultado
+    df = pd.DataFrame.from_dict(api_response['results'])
+
+    # Actualizar cursor
+    cursor = api_response['header'].get('nextCursor', None)
+    params["cursor"] = cursor
+
+    # Bucle para iterar con el cursor
+    while cursor:
+        if env == 'dev' and iteration_count >= iteration_limit:
+            break
+
+        # Actualizar iteración
+        iteration_count += 1
+        print(f'Iteration count: {iteration_count}')
+        print(f'GET {response.url}')
+
+        # Pausa para evitar sobrecargar la API
+        time.sleep(1)
+
+        # Solicitar siguiente página
+        response = requests.get(base_url, headers=headers, params=params)
+        if response.status_code != 200:
+            print(f"Failed to retrieve data at iteration {iteration_count}: {response.status_code}")
+            break
+
+        api_response = response.json()
+
+        # Crear DataFrame temporal y concatenar
+        df_tmp = pd.DataFrame.from_dict(api_response['results'])
+
+        df = pd.concat([df, df_tmp])
+
+        # Actualizar cursor
+        cursor = api_response['header'].get('nextCursor', None)
+        params["cursor"] = cursor
+
+    return df, df.head(1000)
+
 
 def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
