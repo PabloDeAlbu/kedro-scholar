@@ -135,6 +135,11 @@ def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromData
             break
 
         api_response = response.json()
+        
+        # Verificar si 'results' está vacío
+        if not api_response.get('results'):
+            print("No more results. Stopping iteration.")
+            break
 
         # Crear DataFrame temporal y concatenar
         df_tmp = pd.DataFrame.from_dict(api_response['results'])
