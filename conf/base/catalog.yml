@@ -25,9 +25,9 @@
     kedro-viz:
       layer: raw
 
-"raw/{source}/{entity}_dev":
-  type: pandas.CSVDataset
-  filepath: "data/01_raw/{source}/{entity}_dev.csv"
+"raw/{source}/{entity}_dev#parquet":
+  type: pandas.ParquetDataset
+  filepath: "data/01_raw/{source}/{entity}_dev.parquet"
   metadata:
     kedro-viz:
       layer: raw
