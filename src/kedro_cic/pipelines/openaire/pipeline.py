@@ -27,6 +27,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=fetch_researchproduct_collectedfrom_datasource_openaire,
             inputs=[
                 "params:openaire_fetch_options.relCollectedFromDatasourceId",
+                "params:openaire_fetch_options.refresh_token",
                 "params:fetch_options.env",
             ],
             outputs=[

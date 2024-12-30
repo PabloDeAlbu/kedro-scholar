@@ -68,14 +68,15 @@ def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.Dat
 
 
 
-def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromDatasourceId, env):
+def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromDatasourceId, r_token, env):
     cursor = '*'
     base_url = 'https://api-beta.openaire.eu/graph/researchProducts'
     iteration_limit = 5
     iteration_count = 0
     page_size = 50  # Ajustar este valor según sea necesario
     headers = {
-        "accept": "application/json"
+        "accept": "application/json",
+        'Authorization': f'Bearer {r_token}'
     }
 
     params = {
