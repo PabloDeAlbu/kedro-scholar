@@ -73,7 +73,7 @@ def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromData
     base_url = 'https://api-beta.openaire.eu/graph/researchProducts'
     iteration_limit = 5
     iteration_count = 0
-    page_size = 50  # Puedes ajustar este valor según sea necesario
+    page_size = 50  # Ajustar este valor según sea necesario
     headers = {
         "accept": "application/json"
     }
@@ -83,6 +83,9 @@ def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromData
         "pageSize": page_size,
         "cursor": cursor
     }
+
+    max_retries = 5  # Máximo número de reintentos en caso de error 429
+    retry_wait = 5   # Tiempo inicial de espera entre reintentos en segundos
 
     # Primera solicitud
     response = requests.get(base_url, headers=headers, params=params)
@@ -111,10 +114,21 @@ def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromData
         print(f'GET {response.url}')
 
         # Pausa para evitar sobrecargar la API
-        time.sleep(1)
+        time.sleep(2)
 
-        # Solicitar siguiente página
-        response = requests.get(base_url, headers=headers, params=params)
+        # Reintentos en caso de error 429
+        retries = 0
+        while retries < max_retries:
+            response = requests.get(base_url, headers=headers, params=params)
+            if response.status_code == 429:
+                retries += 1
+                print(f"Rate limit hit. Retry {retries}/{max_retries}. Waiting {retry_wait} seconds...")
+                time.sleep(retry_wait)
+                retry_wait *= 2  # Incrementar el tiempo de espera exponencialmente
+            else:
+                break
+
+        # Si aún después de reintentos no se resuelve, interrumpir
         if response.status_code != 200:
             print(f"Failed to retrieve data at iteration {iteration_count}: {response.status_code}")
             break
@@ -131,7 +145,6 @@ def fetch_researchproduct_collectedfrom_datasource_openaire(relCollectedFromData
         params["cursor"] = cursor
 
     return df, df.head(1000)
-
 
 def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
