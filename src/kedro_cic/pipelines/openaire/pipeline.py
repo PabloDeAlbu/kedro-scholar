@@ -1,7 +1,6 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     fetch_researchproduct_openaire,
-    fetch_researchproduct_collectedfrom_datasource_openaire,
     land_researchproduct_openaire,
     land_researchproduct2creator_openaire,
     land_researchproduct2measure_openaire,
@@ -22,20 +21,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs="raw/openaire/researchproduct",
         ),
-        node(
-            name="fetch_researchproduct_collectedfrom_datasource_openaire",
-            func=fetch_researchproduct_collectedfrom_datasource_openaire,
-            inputs=[
-                "params:openaire_fetch_options.relCollectedFromDatasourceId",
-                "params:openaire_fetch_options.refresh_token",
-                "params:fetch_options.env",
-            ],
-            outputs=[
-                "raw/openaire/researchproduct_collectedfrom#parquet",
-                "raw/openaire/researchproduct_collectedfrom_dev#parquet",
-                ],
-        ),
-        node(
+       node(
             name="land_researchproduct_openaire",
             func=land_researchproduct_openaire,
             inputs="raw/openaire/researchproduct",
