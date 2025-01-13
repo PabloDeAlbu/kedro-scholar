@@ -37,4 +37,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/openaire_collectedfrom_datasource/researchproduct2subject"
                 ]
         ),
-    ])
+    ], tags="openaire_researchproduct_collectedfrom_datasource")
