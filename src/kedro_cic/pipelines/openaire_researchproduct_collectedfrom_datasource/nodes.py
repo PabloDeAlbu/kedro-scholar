@@ -123,7 +123,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     df_researchproduct.drop(columns=['language'], inplace=True)
 
     ## bestAccessRight
-    df_researchproduct['bestAccessRight_label'] = df_researchproduct['bestAccessRight'].apply(lambda x: x['label'])
+    df_researchproduct['bestAccessRight_label'] = df_researchproduct['bestAccessRight'].apply(lambda x: x['label'] if x else None)
     df_researchproduct.drop(columns=['bestAccessRight'], inplace=True)
 
     ## indicators
