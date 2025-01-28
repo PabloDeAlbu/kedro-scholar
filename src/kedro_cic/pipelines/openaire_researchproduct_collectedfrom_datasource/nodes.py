@@ -104,7 +104,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
             'mainTitle', 
             # 'description', 
             'publicationDate', 
-            # 'publisher',
+            'publisher',
             # 'format', 
             'bestAccessRight', 
             'id', 
@@ -120,11 +120,9 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     df_researchproduct['language_code'] = df_researchproduct['language'].apply(lambda x: x['code'])
     df_researchproduct['language_label'] = df_researchproduct['language'].apply(lambda x: x['label'])
-    df_researchproduct.drop(columns=['language'], inplace=True)
 
     ## bestAccessRight
     df_researchproduct['bestAccessRight_label'] = df_researchproduct['bestAccessRight'].apply(lambda x: x['label'] if x else None)
-    df_researchproduct.drop(columns=['bestAccessRight'], inplace=True)
 
     ## indicators
     # Desanidar la columna 'indicators' usando pd.json_normalize()
@@ -139,25 +137,26 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     ## originalId
     df_researchproduct2originalId = df_researchproduct.explode('originalId').reset_index(drop=True)
     df_researchproduct2originalId = df_researchproduct2originalId[['id','originalId']]
-    df_researchproduct.drop(columns=['originalId'], inplace=True)
 
     ## author
     df_researchproduct2author = df_researchproduct.explode('author').reset_index(drop=True)
     df_researchproduct2author = df_researchproduct2author[['id','author']]
     df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
     df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
-    df_researchproduct.drop(columns=['author'], inplace=True)
 
     ## subjects
     df_researchproduct2subject = df_researchproduct.explode('subjects').reset_index(drop=True)
     df_researchproduct2subject = df_researchproduct2subject[['id','subjects']]
     df_subjects = pd.json_normalize(df_researchproduct2subject['subjects']).reset_index(drop=True)
     df_researchproduct2subject = pd.concat([df_researchproduct2subject.drop(columns=['subjects']), df_subjects], axis=1)
-    df_researchproduct.drop(columns=['subjects'], inplace=True)
 
+    ## drop de columnas procesadas en otros df
+    df_researchproduct.drop(columns=['author','subjects','bestAccessRight', 'language', 'originalId'], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
+    df_researchproduct2originalId['load_datetime'] = date.today()
+    df_researchproduct2author['load_datetime'] = date.today()
+    df_researchproduct2subject['load_datetime'] = date.today()
 
     return df_researchproduct, df_researchproduct2originalId, df_researchproduct2author, df_researchproduct2subject
-
 

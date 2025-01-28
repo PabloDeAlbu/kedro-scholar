@@ -31,10 +31,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=land_openaire_researchproduct_collectedfrom_datasource,
             inputs="raw/openaire/researchproduct_collectedfrom_datasource#parquet",
             outputs=[
-                "ldg/openaire_collectedfrom_datasource/researchproduct",
-                "ldg/openaire_collectedfrom_datasource/researchproduct2originalId",
-                "ldg/openaire_collectedfrom_datasource/researchproduct2author",
-                "ldg/openaire_collectedfrom_datasource/researchproduct2subject"
+                "ldg/openaire_graph/researchproduct",
+                "ldg/openaire_graph/researchproduct2originalId",
+                "ldg/openaire_graph/researchproduct2author",
+                "ldg/openaire_graph/researchproduct2subject"
                 ]
         ),
     ], tags="openaire_researchproduct_collectedfrom_datasource")
