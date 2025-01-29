@@ -15,7 +15,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="fetch_researchproduct_openaire",
             func=fetch_researchproduct_openaire,
             inputs=[
-                "stg/dim_doi",
+                # "stg/dim_doi",
+                "stg_openaire_graph/hub_openaire_graph_originalid",
                 "params:openaire_fetch_options.refresh_token",
                 "params:fetch_options.env",
             ],

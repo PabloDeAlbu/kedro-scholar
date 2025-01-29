@@ -51,7 +51,7 @@
   credentials: dw
 
 # staging
-"stg/{source}/{dataset}":
+"stg_{source}/{dataset}":
   type: pandas.SQLTableDataset
   table_name: "{dataset}"
   save_args:
