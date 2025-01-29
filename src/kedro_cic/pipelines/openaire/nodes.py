@@ -79,10 +79,12 @@ def fetch_researchproduct_openaire(df_input: pd.DataFrame, r_token: str, env: st
 
 def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
-    ## Paso 1: Convierto tipos y selecciono columnas con cardinalidad 1 con respecto a cada research product
-    df = df.convert_dtypes()
-    df_researchproduct = df.loc[:,
-    [
+    ## Paso 1: Convierto tipos y selecciono columnas con 
+    # cardinalidad 1 con respecto a cada research product
+
+    # Comento atributos para dejar en claro que no se procesarán en esta fase.  
+    # Estas columnas pueden incluirse en futuras ingestas según las necesidades de análisis.
+    expected_columns = [
     #       '@xmlns:xsi', 
         'dri:objIdentifier', 
         'dri:dateOfCollection',
@@ -123,9 +125,19 @@ def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
     #       'storagedate',
     #       'version'
     ]
-    ]
 
-    # Paso 2: Agrego fecha de carga
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    # Seleccionar solo las columnas esperadas
+    df_researchproduct = df[expected_columns]
+
+    # Convertir tipos
+    df_researchproduct = df_researchproduct.convert_dtypes()
+
+    # Agregar fecha de carga
     df_researchproduct['load_datetime'] = date.today()
 
     return df_researchproduct
@@ -180,7 +192,8 @@ def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
 
 def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
-
+    # FIXME chequear si existe pid
+    
     ## Paso 1: Seleccionar columnas con identificador y pid
     df_researchproduct = df.loc[:,['dri:objIdentifier', 'pid']]
     df_researchproduct = df_researchproduct.convert_dtypes()
