@@ -8,7 +8,7 @@ import xmltodict
 
 def fetch_openaire_researchproduct_collectedfrom_datasource(relCollectedFromDatasourceId, r_token, env):
     cursor = '*'
-    base_url = 'https://api-beta.openaire.eu/graph/researchProducts'
+    base_url = 'https://api.openaire.eu/graph/researchProducts'
     iteration_limit = 5
     iteration_count = 0
     page_size = 50  # Ajustar este valor según sea necesario
