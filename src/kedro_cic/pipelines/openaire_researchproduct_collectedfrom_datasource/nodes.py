@@ -186,7 +186,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
         'author', 'country', 'subjects','bestAccessRight', 
         'language', 'format', 'instance', 'originalId', 
         'container', 'source', 'pid', 'description',
-        'container', 'contactPerson', 'coverage'
+        'contributor', 'contactPerson', 'coverage'
         ], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
