@@ -90,7 +90,6 @@ def fetch_openaire_researchproduct_collectedfrom_datasource(relCollectedFromData
 
     return df, df.head(1000)
 
-
 def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> pd.DataFrame:
 
     df = df.convert_dtypes()
@@ -118,6 +117,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
         'source',
         'container',
         'contributor',
+        'contactPerson',
         'pid',
         'contactPerson',
         'embargoEndDate'
@@ -169,16 +169,23 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     # TODO container
     
-    # TODO pid
+    # TODO contributor
+    
+    # TODO contactPerson
+    
+    # pid
     df_researchproduct2pid = df.explode('pid').reset_index(drop=True)
     df_researchproduct2pid = df_researchproduct2pid[['id','pid']]
     df_pid = pd.json_normalize(df_researchproduct2pid['pid']).reset_index(drop=True)
     df_researchproduct2pid = pd.concat([df_researchproduct2pid.drop(columns=['pid']), df_pid], axis=1)
 
     ## drop de columnas procesadas en otros df
-    df_researchproduct.drop(columns=['author', 'country', 'subjects','bestAccessRight', 
-                                     'language', 'format', 'instance', 'originalId', 
-                                     'container', 'source', 'pid', 'description'], inplace=True)
+    df_researchproduct.drop(columns=[
+        'author', 'country', 'subjects','bestAccessRight', 
+        'language', 'format', 'instance', 'originalId', 
+        'container', 'source', 'pid', 'description',
+        'container', 'contactPerson'
+        ], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
     df_researchproduct2originalId['load_datetime'] = date.today()
