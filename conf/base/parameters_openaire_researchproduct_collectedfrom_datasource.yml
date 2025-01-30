@@ -4,7 +4,7 @@
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
 openaire_researchproduct_collectedfrom_datasource_fetch_options:
-    access_token: eyJraWQiOiJvaWRjIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMzQxMzEyNDEyOTgwNjVAb3BlbmFpcmUuZXUiLCJhenAiOiI3Njc0MjJiOS01NDYxLTQ4MDctYTgwYS1mOWEyMDcyZDNhN2QiLCJpc3MiOiJodHRwczpcL1wvYWFpLm9wZW5haXJ
-    refresh_token: eyJhbGciOiJub25lIn0.eyJleHAiOjE3NDA4NDE5MzgsImp0aSI6ImJkNWJiM2M2LTU3OGUtNDAwMy1iNDE0LTEyMmQwZDdhMzc4NCJ9.
-    # CIC DIGITAL source_id
-    relCollectedFromDatasourceId: opendoar____::2222f99fe4ee52bacba5f5406ff033aa
+    access_token: REPLACE_ME
+    refresh_token: REPLACE_ME
+    # SEDICI source_id
+    relCollectedFromDatasourceId: opendoar____::01e9565cecc4e989123f9620c1d09c09
