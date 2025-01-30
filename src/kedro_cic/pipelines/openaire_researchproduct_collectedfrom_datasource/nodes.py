@@ -147,12 +147,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     df_researchproduct = df[expected_columns].copy()
     df.reset_index(drop=True, inplace=True)
 
-    ## author
-    df_researchproduct2author = df.explode('author').reset_index(drop=True)
-    df_researchproduct2author = df_researchproduct2author[['id','author']]
-    df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
-    df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
-
+    # language
     df_researchproduct['language_code'] = df_researchproduct['language'].apply(lambda x: x['code'])
     df_researchproduct['language_label'] = df_researchproduct['language'].apply(lambda x: x['label'])
 
@@ -161,7 +156,13 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     ## indicators
     df_indicators = pd.json_normalize(df['indicators']).reset_index(drop=True)
-    df_researchproduct = pd.concat([df.drop(columns=['indicators']), df_indicators], axis=1)
+    df_researchproduct = pd.concat([df_researchproduct.drop(columns=['indicators']).reset_index(drop=True), df_indicators], axis=1)
+
+    ## author
+    df_researchproduct2author = df.explode('author').reset_index(drop=True)
+    df_researchproduct2author = df_researchproduct2author[['id','author']]
+    df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
+    df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
 
     ## originalId
     df_researchproduct2originalId = df.explode('originalId').reset_index(drop=True)
