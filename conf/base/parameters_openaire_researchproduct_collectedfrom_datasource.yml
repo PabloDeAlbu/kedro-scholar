@@ -4,6 +4,7 @@
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
 openaire_researchproduct_collectedfrom_datasource_fetch_options:
+    access_token: REPLACE_ME
     refresh_token: REPLACE_ME
     # CIC DIGITAL source_id
     relCollectedFromDatasourceId: opendoar____::2222f99fe4ee52bacba5f5406ff033aa
