@@ -4,7 +4,6 @@ import math
 import pandas as pd
 import requests
 import time
-import xmltodict
 
 def fetch_openaire_researchproduct_collectedfrom_datasource(relCollectedFromDatasourceId, r_token, env):
     cursor = '*'
@@ -118,6 +117,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
         'container',
         'contributor',
         'contactPerson',
+        'coverage',
         'pid',
         'contactPerson',
         'embargoEndDate'
@@ -172,6 +172,8 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     # TODO contributor
     
     # TODO contactPerson
+
+    # TODO coverage
     
     # pid
     df_researchproduct2pid = df.explode('pid').reset_index(drop=True)
@@ -184,7 +186,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
         'author', 'country', 'subjects','bestAccessRight', 
         'language', 'format', 'instance', 'originalId', 
         'container', 'source', 'pid', 'description',
-        'container', 'contactPerson'
+        'container', 'contactPerson', 'coverage'
         ], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
