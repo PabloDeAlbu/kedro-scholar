@@ -159,6 +159,8 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     df_subjects = pd.json_normalize(df_researchproduct2subject['subjects']).reset_index(drop=True)
     df_researchproduct2subject = pd.concat([df_researchproduct2subject.drop(columns=['subjects']), df_subjects], axis=1)
 
+    # TODO description
+
     # TODO format
 
     # TODO instance
@@ -176,7 +178,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     ## drop de columnas procesadas en otros df
     df_researchproduct.drop(columns=['author', 'country', 'subjects','bestAccessRight', 
                                      'language', 'format', 'instance', 'originalId', 
-                                     'container', 'source', 'pid'], inplace=True)
+                                     'container', 'source', 'pid', 'description'], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
     df_researchproduct2originalId['load_datetime'] = date.today()
