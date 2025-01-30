@@ -116,6 +116,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
         'isInDiamondJournal',
         'publisher',
         'source',
+        'container',
         'contributor',
         'pid',
         'contactPerson',
@@ -128,6 +129,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
             df[col] = pd.NA
 
     df_researchproduct = df[expected_columns].copy()
+    df.reset_index(drop=True, inplace=True)
 
     ## author
     df_researchproduct2author = df.explode('author').reset_index(drop=True)
@@ -143,7 +145,6 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     ## indicators
     df_indicators = pd.json_normalize(df['indicators']).reset_index(drop=True)
-    df.reset_index(drop=True, inplace=True)
     df_researchproduct = pd.concat([df.drop(columns=['indicators']), df_indicators], axis=1)
 
     ## originalId
@@ -162,6 +163,10 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     # TODO instance
 
+    # TODO source
+
+    # TODO container
+    
     # TODO pid
     df_researchproduct2pid = df.explode('pid').reset_index(drop=True)
     df_researchproduct2pid = df_researchproduct2pid[['id','pid']]
@@ -170,7 +175,8 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     ## drop de columnas procesadas en otros df
     df_researchproduct.drop(columns=['author', 'country', 'subjects','bestAccessRight', 
-                                     'language', 'format', 'instance', 'originalId', 'pid'], inplace=True)
+                                     'language', 'format', 'instance', 'originalId', 
+                                     'container', 'source', 'pid'], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
     df_researchproduct2originalId['load_datetime'] = date.today()
