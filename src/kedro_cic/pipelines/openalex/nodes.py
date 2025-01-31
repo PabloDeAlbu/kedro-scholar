@@ -162,36 +162,41 @@ def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
     return df_author2topic
 
 def land_work_openalex(df_work_raw):
-    df_work = df_work_raw.loc[:,
-        [
-            'id',
-            'doi',
-            'title',
-            'display_name',
-            'publication_year',
-            'publication_date',
-            'language',
-            'type',
-            'type_crossref',
-            'countries_distinct_count',
-            'institutions_distinct_count',
-            'fwci',
-            'has_fulltext',
-            'fulltext_origin',
-            'cited_by_count',
-            'is_retracted',
-            'is_paratext',
-            'locations_count',
-            'referenced_works_count',
-            'cited_by_api_url',
-            'updated_date',
-            'created_date'
-        ]
-    ]
+    df_work = df_work_raw.drop(columns=[
+        'authorships',
+        'institution_assertions',
+        'citation_normalized_percentile',
+        'cited_by_percentile_year',
+        'referenced_works_count',
+        'referenced_works',
+        'related_works',
+        'ids',
+        'primary_location',
+        'indexed_in',
+        'open_access',
+        'corresponding_author_ids',
+        'corresponding_institution_ids',
+        'apc_list',
+        'apc_paid',
+        'biblio',
+        'primary_topic',
+        'topics',
+        'keywords',
+        'concepts',
+        'mesh',
+        'locations',
+        'best_oa_location',
+        'sustainable_development_goals',
+        'grants',
+        'datasets',
+        'versions',
+        'abstract_inverted_index',
+        'abstract_inverted_index_v3',
+        'counts_by_year'
+    ])
 
     df_work = df_work.convert_dtypes()
-    df_work.rename(columns={'id':'work_id'}, inplace=True)
-    
+        
     return df_work
 
 def land_work2apc_list_openalex(df_work_raw):
@@ -219,24 +224,32 @@ def land_work2apc_paid_openalex(df_work_raw):
     return df_work2apc_paid
 
 def land_work2authorships_openalex(df_work_raw):
-    df_work2authorships = df_work_raw.loc[:,['id','authorships']]
-    df_work2authorships = df_work2authorships.convert_dtypes()
-    df_work2authorships.rename(columns={"id":'work_id'}, inplace=True)
+    # Seleccionar las columnas necesarias y convertir los tipos de datos
+    df_work2authorships = df_work_raw[['id', 'authorships']].convert_dtypes()
+    df_work2authorships.rename(columns={"id": "work_id"}, inplace=True)
 
-    df_work2authorships_exploded = df_work2authorships.explode('authorships').reset_index(drop=True)
-    df_work2authorships_norm =  pd.json_normalize(df_work2authorships_exploded['authorships'])
-    df_work2authorships_norm.rename(columns={"author.id":'author_id'}, inplace=True)
-    
-    df_work = df_work2authorships_exploded.loc[:,'work_id']
-    df_work2authorships = pd.concat((df_work, df_work2authorships_norm), axis=1)
+    # Expandir la lista de authorships
+    df_work2authorships_exploded = df_work2authorships.explode('authorships', ignore_index=True)
 
-    df_work2author = df_work2authorships.loc[:,['work_id','author_id','author_position']]
-    df_author2institution_exploded = df_work2authorships.loc[:,['author_id','institutions']].explode('institutions').reset_index(drop=True)
+    # Normalizar la información de authorships
+    df_authorships_norm = pd.json_normalize(df_work2authorships_exploded['authorships'])
+    df_authorships_norm.rename(columns={"author.id": "author_id"}, inplace=True)
 
-    df_author = df_author2institution_exploded.loc[:,'author_id']
+    # Combinar work_id con la información normalizada de authorships
+    df_work2authorships = df_work2authorships_exploded[['work_id']].join(df_authorships_norm)
+
+    # Extraer la relación work-author
+    df_work2author = df_work2authorships[['work_id', 'author_id', 'author_position']]
+
+    # Expandir la lista de instituciones asociadas a cada autor
+    df_author2institution_exploded = df_work2authorships.explode('institutions', ignore_index=True)
+
+    # Normalizar la información de instituciones
     df_institution_norm = pd.json_normalize(df_author2institution_exploded['institutions'])
-    df_institution_norm.drop(columns=['lineage'], inplace=True)
-    df_author2institution = pd.concat((df_author, df_institution_norm), axis=1)
+    df_institution_norm.drop(columns=['lineage'], errors='ignore', inplace=True)
+
+    # Combinar author_id con la información normalizada de instituciones
+    df_author2institution = df_author2institution_exploded[['author_id']].join(df_institution_norm)
 
     return df_work2author, df_author2institution
 
