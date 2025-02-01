@@ -195,8 +195,9 @@ def land_work_openalex(df_work_raw):
         'counts_by_year'
     ])
 
+    df_work['load_datetime'] = date.today()
     df_work = df_work.convert_dtypes()
-        
+
     return df_work
 
 def land_work2apc_list_openalex(df_work_raw):
