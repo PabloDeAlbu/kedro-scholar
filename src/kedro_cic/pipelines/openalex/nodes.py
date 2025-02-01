@@ -159,6 +159,7 @@ def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
     df_author2topic.rename(columns={'subfield.id':'subfield_id'}, inplace=True)
 
     df_author2topic['load_datetime'] = date.today()
+
     return df_author2topic
 
 def land_work_openalex(df_work_raw):
@@ -207,8 +208,7 @@ def land_work2apc_list_openalex(df_work_raw):
     df_work2apc_list = pd.json_normalize(df_work['apc_list'])
     df_work2apc_list = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_list), axis=1)
     
-    # Rename de columnas
-    df_work2apc_list.rename(columns={'id': 'work_id'}, inplace=True)
+    df_work2apc_list['load_datetime'] = date.today()
 
     return df_work2apc_list
 
@@ -219,8 +219,7 @@ def land_work2apc_paid_openalex(df_work_raw):
     df_work2apc_paid = pd.json_normalize(df_work['apc_paid'])
     df_work2apc_paid = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_paid), axis=1)
 
-    # Rename de columnas
-    df_work2apc_paid.rename(columns={'id': 'work_id'}, inplace=True)
+    df_work2apc_paid['load_datetime'] = date.today()
 
     return df_work2apc_paid
 
@@ -252,6 +251,9 @@ def land_work2authorships_openalex(df_work_raw):
     # Combinar author_id con la información normalizada de instituciones
     df_author2institution = df_author2institution_exploded[['author_id']].join(df_institution_norm)
 
+    df_work2author['load_datetime'] = date.today()
+    df_author2institution['load_datetime'] = date.today()
+
     return df_work2author, df_author2institution
 
 def land_work2ids_openalex(df_work_raw):
@@ -259,6 +261,9 @@ def land_work2ids_openalex(df_work_raw):
     df_work = df_work.convert_dtypes()
 
     df_work2ids = pd.json_normalize(df_work['ids'])
+
+    df_work2ids['load_datetime'] = date.today()
+
     return df_work2ids
 
 def land_work2concepts_openalex(df_work_raw):
@@ -272,16 +277,17 @@ def land_work2concepts_openalex(df_work_raw):
     df_work = df_work2concepts_exploded.loc[:,'id']
     df_work2concepts = pd.concat((df_work, df_work2concepts_norm), axis=1)
     
-    # Rename de columna id
-    df_work2concepts.rename(columns={'id':'work_id'}, inplace=True)
+    df_work2concepts['load_datetime'] = date.today()
+
     return df_work2concepts
 
 def land_work2corresponding_author_ids_openalex(df_work_raw):
     df_work = df_work_raw.loc[:,['id','corresponding_author_ids']]
     df_work = df_work.convert_dtypes()
 
-    df_work2corresponding_author_ids_exploded = df_work.explode('corresponding_author_ids')
-    df_work2corresponding_author_ids = df_work2corresponding_author_ids_exploded.rename(columns={'id':'work_id'})
+    df_work2corresponding_author_ids = df_work.explode('corresponding_author_ids')
+
+    df_work2corresponding_author_ids['load_datetime'] = date.today()
 
     return df_work2corresponding_author_ids
 
@@ -294,10 +300,7 @@ def land_work2primary_topic_openalex(df_work_raw):
     df_work2primary_topic_norm.rename(columns={'id':'topic.id'}, inplace=True)
     df_work2primary_topic = pd.concat((df_work['id'].reset_index(drop=True),df_work2primary_topic_norm), axis=1)
 
-    # Rename de columnas
-    df_work2primary_topic.rename(columns=lambda col: col.replace('.', '_'), inplace=True)
-    df_work2primary_topic.rename(columns={'id': 'work_id'}, inplace=True)
-
+    df_work2primary_topic['load_datetime'] = date.today()
 
     return df_work2primary_topic
 
@@ -318,7 +321,7 @@ def land_work2primary_location_openalex(df_work_raw):
     df_work = df_work['id'].reset_index(drop=True)
     df_work2primarylocation = pd.concat((df_work, df_work2primarylocation), axis=1)
 
-    df_work2primarylocation.rename(columns={'id':'work_id'}, inplace=True)
+    df_work2primarylocation['load_datetime'] = date.today()
 
     return df_work2primarylocation
 
@@ -328,8 +331,7 @@ def land_work2referenced_works_openalex(df_work_raw):
     df_work2referenced_works_exploded =  df_work.explode('referenced_works')
     df_work2referenced_works = df_work2referenced_works_exploded.reset_index(drop=True)
 
-    # Reemplazar '.' por '_' en los nombres de las columnas
-    df_work2referenced_works.rename(columns={'id': 'work_id'})
+    df_work2referenced_works['load_datetime'] = date.today()
 
     return df_work2referenced_works
 
@@ -347,9 +349,7 @@ def land_work2topics_openalex(df_work_raw):
     # Creación de df con work y sus topics
     df_work2topics = pd.concat((df_work2topics_exploded['id'], df_work2topics_norm), axis=1)
 
-    # Rename de columnas
-    df_work2topics.rename(columns=lambda col: col.replace('.', '_'), inplace=True)
-    df_work2topics.rename(columns={'id': 'work_id'}, inplace=True)
+    df_work2topics['load_datetime'] = date.today()
 
     return df_work2topics
 
@@ -372,6 +372,5 @@ def land_work2location_openalex(df_work_raw):
     ]]
 
     df_work_location['load_datetime'] = date.today()
-    df_work_location.rename(columns={'id':'work_id'}, inplace=True)
 
     return df_work_location
