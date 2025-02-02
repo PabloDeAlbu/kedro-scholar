@@ -168,7 +168,6 @@ def land_work_openalex(df_work_raw):
         'institution_assertions',
         'citation_normalized_percentile',
         'cited_by_percentile_year',
-        'referenced_works_count',
         'referenced_works',
         'related_works',
         'ids',
