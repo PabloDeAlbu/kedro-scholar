@@ -173,7 +173,6 @@ def land_work_openalex(df_work_raw):
         'ids',
         'primary_location',
         'indexed_in',
-        'open_access',
         'corresponding_author_ids',
         'corresponding_institution_ids',
         'apc_list',
@@ -194,6 +193,10 @@ def land_work_openalex(df_work_raw):
         'abstract_inverted_index_v3',
         'counts_by_year'
     ])
+
+
+    df_openaccess_expanded = pd.json_normalize(df_work['open_access'])
+    df_work[df_openaccess_expanded.columns] = df_openaccess_expanded
 
     df_work['load_datetime'] = date.today()
     df_work = df_work.convert_dtypes()
