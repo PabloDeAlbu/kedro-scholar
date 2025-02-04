@@ -197,6 +197,7 @@ def land_work_openalex(df_work_raw):
 
     df_openaccess_expanded = pd.json_normalize(df_work['open_access'])
     df_work[df_openaccess_expanded.columns] = df_openaccess_expanded
+    df_work.drop(columns=['open_access'], inplace=True)
 
     df_work['load_datetime'] = date.today()
     df_work = df_work.convert_dtypes()
