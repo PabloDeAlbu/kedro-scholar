@@ -153,6 +153,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
 
     ## bestAccessRight
     df_researchproduct['bestAccessRight_label'] = df['bestAccessRight'].apply(lambda x: x['label'] if x else None)
+    df_researchproduct['bestAccessRight_scheme'] = df['bestAccessRight'].apply(lambda x: x['scheme'] if x else None)
 
     ## indicators
     df_indicators = pd.json_normalize(df['indicators']).reset_index(drop=True)
