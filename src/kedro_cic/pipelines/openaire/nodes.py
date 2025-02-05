@@ -15,86 +15,66 @@ def refresh_access_token(refresh_token):
     else:
         raise Exception(f"Failed to refresh token: {response.status_code}")
 
-def fetch_researchproduct_openaire(df_input: pd.DataFrame, access_token: str, refresh_token: str, env: str) -> tuple[pd.DataFrame, list]:
-    """
-    Fetch research product data from OpenAIRE API, handling token expiration.
-
-    Args:
-        df_input (pd.DataFrame): Input DataFrame containing identifiers.
-        access_token (str): Authorization token for OpenAIRE API.
-        refresh_token (str): Refresh token for obtaining a new access token.
-        env (str): Environment ('dev' or 'prod').
-
-    Returns:
-        tuple[pd.DataFrame, list]: A tuple containing the resulting DataFrame and a list of skipped IDs.
-    """
+def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.DataFrame:
     base_url = "https://api.openaire.eu/search/researchProducts"
     df_list = []
+
+    doi_limit = 9999
+    if (env == 'dev'): doi_limit = 9
+    
     skipped_list = []
-    
-    id_column = 'original_id'
-    id_param = 'originalId'
-    id_limit = 9999 if env == 'prod' else 9
+
+    not_in_openaire = dim_doi['in_openaire'] == False
+    dim_doi = dim_doi[not_in_openaire]
+
+    doi_list = dim_doi.iloc[0:doi_limit]['doi'].to_list()
+    doi_comma_separated = ','.join(doi_list)
+
+    # se define cantidad de batches a partir de la cantidad de resultados por batch y cantidad de doi
     batch_size = 10
-    
-    id_list = df_input[id_column].dropna().iloc[:id_limit].to_list()
-    num_batches = math.ceil(len(id_list) / batch_size)
-    
-    def get_headers():
-        return {"Authorization": f"Bearer {access_token}"}
-    
+    num_batches = math.ceil(len(doi_list) / batch_size)
+
     for batch_index in range(num_batches):
-        batch = id_list[batch_index * batch_size : (batch_index + 1) * batch_size]
-        id_comma_separated = ",".join(batch)
-        graph_url = f"{base_url}?{id_param}={id_comma_separated}"
-        
-        retries = 0
-        max_retries = 5
-        retry_wait = 5  # Tiempo inicial de espera en segundos
-        
-        while retries < max_retries:
-            response = requests.get(graph_url, headers=get_headers())
-            print(f'GET "{graph_url}" {response.status_code}')
-            
-            if response.status_code == 200:
-                data_dict = xmltodict.parse(response.content)
-                results = data_dict.get('response', {}).get('results', {}).get('result', [])
-                
-                for result in results:
-                    publication_header = result.get('header', {})
-                    publication_metadata = result.get('metadata', {}).get('oaf:entity', {}).get('oaf:result', {})
-                    publication = publication_header | publication_metadata
-                    if publication:
-                        df_normalized = pd.json_normalize(publication, max_level=0)
-                        df_list.append(df_normalized)
-                    else:
-                        print("No publication data found in result")
-                break
-            
-            elif response.status_code == 403:
-                print("Access token expired or invalid. Refreshing token...")
-                access_token = refresh_access_token(refresh_token)
-                continue  # Reintentar con el nuevo token
-            
-            elif response.status_code == 429:
-                retries += 1
-                print(f"Rate limit hit. Retry {retries}/{max_retries}. Waiting {retry_wait} seconds...")
-                time.sleep(retry_wait)
-                retry_wait *= 2  # Incrementar el tiempo de espera exponencialmente
-            else:
-                print(f"Error: Received status code {response.status_code}")
-                skipped_list.extend(batch)
-                break
+
+        batch = doi_list[batch_index * batch_size : (batch_index + 1) * batch_size]
+        doi_comma_separated = ','.join(batch)
+
+        graph_url = f"{base_url}?doi={doi_comma_separated}"
+        headers = { 'Authorization': f'Bearer {r_token}' }
+
+        api_response = requests.get(graph_url, headers=headers)
+        print(f'GET "{graph_url}" {api_response.status_code}')
+
+        if api_response.status_code == 200:
+            data_dict = xmltodict.parse(api_response.content)
+            results = data_dict.get('response', {}).get('results', {}).get('result', [])
+
+            for result in results:
+
+                publication_header = result.get('header', {})
+                publication_metadata = result.get('metadata', {}).get('oaf:entity', {}).get('oaf:result', {})
+
+                publication = publication_header | publication_metadata 
+                if publication:
+                    df_normalized = pd.json_normalize(publication, max_level=0)
+                    df_list.append(df_normalized)
+                else:
+                    print("No publication data found in result")
+        else:
+            print(f'Error: Received status code {api_response.status_code}')
+            skipped_list.extend(batch)
+            break
 
     print(f'{len(df_list)} batches processed')
-    print(f'{len(skipped_list)} IDs skipped')
-    
+    print(f'{len(skipped_list)} DOIs skipped')
+
     if df_list:
         df = pd.concat(df_list, ignore_index=True)
     else:
         df = pd.DataFrame()
-    
-    return df, skipped_list
+
+    return df
+
 
 def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
 
