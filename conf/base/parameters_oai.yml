@@ -1,0 +1,9 @@
+# This is a boilerplate parameters config generated for pipeline 'oai'
+# using Kedro 0.19.9.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
+oai_fetch_options:
+    # Replace with OAI URL endpoint
+    base_url: 'REPLACE_ME'
+    context: 'snrd'
