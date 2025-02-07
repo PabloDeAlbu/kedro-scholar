@@ -199,6 +199,14 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     df_pid = pd.json_normalize(df_researchproduct2pid['pid']).reset_index(drop=True)
     df_researchproduct2pid = pd.concat([df_researchproduct2pid.drop(columns=['pid']), df_pid], axis=1)
 
+    # url
+    df_researchproduct2instance = df.explode('instance').reset_index(drop=True)
+    df_researchproduct2instance = df_researchproduct2instance[['id','instance']]
+    df_instance = pd.json_normalize(df_researchproduct2instance['instance']).reset_index(drop=True)
+    df_researchproduct2instance = pd.concat([df_researchproduct2instance.drop(columns=['instance']), df_instance], axis=1)
+    df_researchproduct2url = df_researchproduct2instance[['id','url']]
+    df_researchproduct2url = df_researchproduct2url.explode('url')
+
     ## drop de columnas procesadas en otros df
     df_researchproduct.drop(columns=[
         'author', 'country', 'subjects','bestAccessRight', 
@@ -213,4 +221,4 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     df_researchproduct2subject['load_datetime'] = date.today()
     df_researchproduct2pid['load_datetime'] = date.today()
 
-    return df_researchproduct, df_researchproduct2originalId, df_researchproduct2author, df_researchproduct2subject, df_researchproduct2pid
+    return df_researchproduct, df_researchproduct2originalId, df_researchproduct2author, df_researchproduct2subject, df_researchproduct2pid, df_researchproduct2url
