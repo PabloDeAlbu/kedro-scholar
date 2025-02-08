@@ -220,5 +220,6 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
     df_researchproduct2author['load_datetime'] = date.today()
     df_researchproduct2subject['load_datetime'] = date.today()
     df_researchproduct2pid['load_datetime'] = date.today()
+    df_researchproduct2url['load_datetime'] = date.today()
 
     return df_researchproduct, df_researchproduct2originalId, df_researchproduct2author, df_researchproduct2subject, df_researchproduct2pid, df_researchproduct2url
