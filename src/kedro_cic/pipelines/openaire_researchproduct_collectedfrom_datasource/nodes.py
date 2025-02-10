@@ -14,7 +14,7 @@ def refresh_access_token(refresh_token):
     else:
         raise Exception(f"Failed to refresh token: {response.status_code}")
 
-def fetch_openaire_researchproduct_collectedfrom_datasource(relCollectedFromDatasourceId, access_token, refresh_token, env):
+def fetch_openaire_graph_researchproduct(filter_param, filter_value, access_token, refresh_token, env):
     cursor = '*'
     base_url = 'https://api.openaire.eu/graph/researchProducts'
     iteration_limit = 5
@@ -30,7 +30,7 @@ def fetch_openaire_researchproduct_collectedfrom_datasource(relCollectedFromData
         }
     
     params = {
-        "relCollectedFromDatasourceId": relCollectedFromDatasourceId,  # Búsqueda por institución
+        filter_param: filter_value,
         "pageSize": page_size,
         "cursor": cursor
     }
@@ -105,7 +105,7 @@ def fetch_openaire_researchproduct_collectedfrom_datasource(relCollectedFromData
         
         return df, df.head(1000)
 
-def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_graph_researchproduct(df: pd.DataFrame)-> pd.DataFrame:
 
     df = df.convert_dtypes()
 
@@ -135,6 +135,7 @@ def land_openaire_researchproduct_collectedfrom_datasource(df: pd.DataFrame)-> p
         'contactPerson',
         'coverage',
         'pid',
+        'url',
         'contactPerson',
         'embargoEndDate'
     ]
