@@ -53,7 +53,7 @@ def clean_work_dataframe(df):
 
 def fetch_work_openalex(institution_ror, env):
     session = requests.Session()  # Reutilizar la sesión para eficiencia
-    base_url = 'https://api.openalex.org/works?filter=institutions.ror={}&cursor={}&per-page=200'
+    base_url = 'https://api.openalex.org/works?filter=institutions.ror:{}&cursor={}&per-page=200'
     cursor = '*'
     iteration_limit = 5
     iteration_count = 0
