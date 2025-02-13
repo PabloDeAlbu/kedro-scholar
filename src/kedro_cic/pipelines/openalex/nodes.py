@@ -46,52 +46,58 @@ def fetch_author_openalex(institution_ror, env):
 
     return df
 
+def clean_work_dataframe(df):
+    """Elimina columnas innecesarias si están presentes."""
+    columns_to_drop = {"abstract_inverted_index", "abstract_inverted_index_v3"}
+    return df.drop(columns=columns_to_drop.intersection(df.columns), inplace=False)
+
 def fetch_work_openalex(institution_ror, env):
+    session = requests.Session()  # Reutilizar la sesión para eficiencia
+    base_url = 'https://api.openalex.org/works?filter=institutions.ror={}&cursor={}&per-page=200'
     cursor = '*'
-    base_url = 'https://api.openalex.org/works?filter=institutions.ror:{}&cursor={}&per-page=200'
     iteration_limit = 5
     iteration_count = 0
+    all_dataframes = []  # Lista para almacenar los DataFrames antes de concatenar
 
-    url = base_url.format(institution_ror, cursor)
-    api_response = requests.get(url).json()
-
-    print(f'Iteration count: {iteration_count}')
-    print(f'GET {url}')
-
-    # creo dataframe con las columnas del primer resultado 
-    df = pd.DataFrame.from_dict(api_response['results'])
-
-    # update cursor
-    cursor = api_response['meta']['next_cursor']
-    url = base_url.format(institution_ror, cursor)
-
-    while cursor:
-
-        if env == 'dev' and iteration_count >= iteration_limit:
-            break
-
-        # request api with updated cursor
+    while True:
         url = base_url.format(institution_ror, cursor)
-
-        iteration_count += 1
         print(f'Iteration count: {iteration_count}')
         print(f'GET {url}')
 
-        # Sleep para evitar exceder el límite de solicitudes por segundo
-        time.sleep(1)
+        try:
+            response = session.get(url, timeout=10)
+            response.raise_for_status()
+            api_response = response.json()
+        except requests.RequestException as e:
+            print(f"Error en la solicitud: {e}")
+            break
+        except ValueError:
+            print("Error al decodificar JSON.")
+            break
 
-        api_response = requests.get(url).json()
+        # Si no hay resultados, se termina el bucle
+        if 'results' not in api_response or not api_response['results']:
+            print("No hay más datos disponibles.")
+            break
 
-        df_tmp = pd.DataFrame.from_dict(api_response['results'])       
+        df_tmp = pd.DataFrame.from_dict(api_response['results'])
+        df_tmp = clean_work_dataframe(df_tmp)
+        all_dataframes.append(df_tmp)
 
-        if "abstract_inverted_index" in df_tmp.columns:
-            df_tmp.drop(columns=["abstract_inverted_index"], inplace=True)
+        # Actualizar cursor
+        cursor = api_response.get('meta', {}).get('next_cursor')
+        if not cursor:
+            break
 
+        # Control de iteraciones en entorno 'dev'
+        iteration_count += 1
+        if env == 'dev' and iteration_count >= iteration_limit:
+            break
 
-        df = pd.concat([df, df_tmp])
+        time.sleep(1)  # Respetar límites de la API
 
-        # update cursor
-        cursor = api_response['meta']['next_cursor']
+    # Concatenar todos los DataFrames en uno solo
+    df = pd.concat(all_dataframes, ignore_index=True) if all_dataframes else pd.DataFrame()
 
     return df, df.head(1000)
 
