@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 import time
-from datetime import date
+from datetime import datetime
 from pandas import json_normalize
 
 def fetch_author_openalex(institution_ror, env):
@@ -119,7 +119,7 @@ def land_author_openalex(df: pd.DataFrame)-> pd.DataFrame:
     )
 
     df_author = df_author.convert_dtypes()
-    df_author['load_datetime'] = date.today()
+    df_author['load_datetime'] = pd.to_datetime(datetime.today())
     
     return df_author
 
@@ -141,7 +141,7 @@ def land_author2affiliation_openalex(df: pd.DataFrame)-> pd.DataFrame:
     df_author2affiliation.rename(columns={'institution.id':'institution_id'}, inplace=True)
     df_author2affiliation = df_author2affiliation.convert_dtypes()
 
-    df_author2affiliation['load_datetime'] = date.today()
+    df_author2affiliation['load_datetime'] = pd.to_datetime(datetime.today())
     
     return df_author2affiliation
 
@@ -164,48 +164,43 @@ def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
     df_author2topic.rename(columns={'field.id':'field_id'}, inplace=True)
     df_author2topic.rename(columns={'subfield.id':'subfield_id'}, inplace=True)
 
-    df_author2topic['load_datetime'] = date.today()
+    df_author2topic['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_author2topic
 
 def land_work_openalex(df_work_raw):
-    df_work = df_work_raw.drop(columns=[
-        'authorships',
-        'institution_assertions',
-        'citation_normalized_percentile',
-        'cited_by_percentile_year',
-        'referenced_works',
-        'related_works',
-        'ids',
-        'primary_location',
-        'indexed_in',
-        'corresponding_author_ids',
-        'corresponding_institution_ids',
-        'apc_list',
-        'apc_paid',
-        'biblio',
-        'primary_topic',
-        'topics',
-        'keywords',
-        'concepts',
-        'mesh',
-        'locations',
-        'best_oa_location',
-        'sustainable_development_goals',
-        'grants',
-        'datasets',
-        'versions',
-        'abstract_inverted_index',
-        'abstract_inverted_index_v3',
-        'counts_by_year'
-    ])
+    """Limpia y transforma los datos de OpenAlex para su almacenamiento en una base de datos relacional."""
+    
+    # Copia para evitar modificar el DataFrame original
+    df_work = df_work_raw.copy()
 
+    # Lista de columnas a eliminar
+    columns_to_drop = {
+        'authorships', 'institution_assertions', 'citation_normalized_percentile', 
+        'cited_by_percentile_year', 'referenced_works', 'related_works', 'ids', 
+        'primary_location', 'indexed_in', 'corresponding_author_ids', 'corresponding_institution_ids',
+        'apc_list', 'apc_paid', 'biblio', 'primary_topic', 'topics', 'keywords', 
+        'concepts', 'mesh', 'locations', 'best_oa_location', 'sustainable_development_goals',
+        'grants', 'datasets', 'versions', 'abstract_inverted_index', 
+        'abstract_inverted_index_v3', 'counts_by_year', 'open_access'
+    }
 
-    df_openaccess_expanded = pd.json_normalize(df_work['open_access'])
-    df_work[df_openaccess_expanded.columns] = df_openaccess_expanded
-    df_work.drop(columns=['open_access'], inplace=True)
+    # Elimina solo las columnas que existen en el DataFrame
+    df_work.drop(columns=columns_to_drop.intersection(df_work.columns), inplace=True)
 
-    df_work['load_datetime'] = date.today()
+    # Expandir la información de 'open_access' si está presente
+    if 'open_access' in df_work.columns:
+        df_openaccess_expanded = pd.json_normalize(df_work['open_access'].dropna())
+        
+        # Solo agrega las columnas si hay datos en open_access
+        if not df_openaccess_expanded.empty:
+            df_work = df_work.drop(columns=['open_access'])
+            df_work = pd.concat([df_work, df_openaccess_expanded], axis=1)
+
+    # Agregar la fecha de carga con formato datetime
+    df_work['load_datetime'] = pd.to_datetime(datetime.today())
+
+    # Convertir tipos de datos automáticamente
     df_work = df_work.convert_dtypes()
 
     return df_work
@@ -217,7 +212,7 @@ def land_work2apc_list_openalex(df_work_raw):
     df_work2apc_list = pd.json_normalize(df_work['apc_list'])
     df_work2apc_list = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_list), axis=1)
     
-    df_work2apc_list['load_datetime'] = date.today()
+    df_work2apc_list['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2apc_list
 
@@ -228,7 +223,7 @@ def land_work2apc_paid_openalex(df_work_raw):
     df_work2apc_paid = pd.json_normalize(df_work['apc_paid'])
     df_work2apc_paid = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_paid), axis=1)
 
-    df_work2apc_paid['load_datetime'] = date.today()
+    df_work2apc_paid['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2apc_paid
 
@@ -260,8 +255,8 @@ def land_work2authorships_openalex(df_work_raw):
     # Combinar author_id con la información normalizada de instituciones
     df_author2institution = df_author2institution_exploded[['author_id']].join(df_institution_norm)
 
-    df_work2author['load_datetime'] = date.today()
-    df_author2institution['load_datetime'] = date.today()
+    df_work2author['load_datetime'] = pd.to_datetime(datetime.today())
+    df_author2institution['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2author, df_author2institution
 
@@ -271,7 +266,7 @@ def land_work2ids_openalex(df_work_raw):
 
     df_work2ids = pd.json_normalize(df_work['ids'])
 
-    df_work2ids['load_datetime'] = date.today()
+    df_work2ids['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2ids
 
@@ -286,7 +281,7 @@ def land_work2concepts_openalex(df_work_raw):
     df_work = df_work2concepts_exploded.loc[:,'id']
     df_work2concepts = pd.concat((df_work, df_work2concepts_norm), axis=1)
     
-    df_work2concepts['load_datetime'] = date.today()
+    df_work2concepts['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2concepts
 
@@ -296,7 +291,7 @@ def land_work2corresponding_author_ids_openalex(df_work_raw):
 
     df_work2corresponding_author_ids = df_work.explode('corresponding_author_ids')
 
-    df_work2corresponding_author_ids['load_datetime'] = date.today()
+    df_work2corresponding_author_ids['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2corresponding_author_ids
 
@@ -309,7 +304,7 @@ def land_work2primary_topic_openalex(df_work_raw):
     df_work2primary_topic_norm.rename(columns={'id':'topic.id'}, inplace=True)
     df_work2primary_topic = pd.concat((df_work['id'].reset_index(drop=True),df_work2primary_topic_norm), axis=1)
 
-    df_work2primary_topic['load_datetime'] = date.today()
+    df_work2primary_topic['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2primary_topic
 
@@ -330,7 +325,7 @@ def land_work2primary_location_openalex(df_work_raw):
     df_work = df_work['id'].reset_index(drop=True)
     df_work2primarylocation = pd.concat((df_work, df_work2primarylocation), axis=1)
 
-    df_work2primarylocation['load_datetime'] = date.today()
+    df_work2primarylocation['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2primarylocation
 
@@ -340,7 +335,7 @@ def land_work2referenced_works_openalex(df_work_raw):
     df_work2referenced_works_exploded =  df_work.explode('referenced_works')
     df_work2referenced_works = df_work2referenced_works_exploded.reset_index(drop=True)
 
-    df_work2referenced_works['load_datetime'] = date.today()
+    df_work2referenced_works['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2referenced_works
 
@@ -358,7 +353,7 @@ def land_work2topics_openalex(df_work_raw):
     # Creación de df con work y sus topics
     df_work2topics = pd.concat((df_work2topics_exploded['id'], df_work2topics_norm), axis=1)
 
-    df_work2topics['load_datetime'] = date.today()
+    df_work2topics['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work2topics
 
@@ -380,6 +375,6 @@ def land_work2location_openalex(df_work_raw):
         'source_is_in_doaj', 'source_is_oa', 'source_issn_l'
     ]]
 
-    df_work_location['load_datetime'] = date.today()
+    df_work_location['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work_location
