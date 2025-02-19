@@ -1,62 +1,38 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
-    fetch_researchproduct_openaire,
-    land_researchproduct_openaire,
-    land_researchproduct2creator_openaire,
-    land_researchproduct2measure_openaire,
-    land_researchproduct2pid_openaire,
-    land_researchproduct2relevantdate_openaire,
-    land_researchproduct2subject_openaire,
+    fetch_openaire_researchproduct,
+    land_openaire_researchproduct,
 )
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
         node(
-            name="fetch_researchproduct_openaire",
-            func=fetch_researchproduct_openaire,
+            name="fetch_openaire_researchproduct",
+            func=fetch_openaire_researchproduct,
             inputs=[
-                "stg/dim_doi",
-                #"stg_openaire_graph/hub_openaire_graph_originalid",
+                "params:openaire_fetch_options.filter_label",
+                "params:openaire_fetch_options.filter_param",
+                "params:openaire_fetch_options.filter_value",
                 "params:openaire_fetch_options.access_token",
+                "params:openaire_fetch_options.refresh_token",
                 "params:fetch_options.env",
             ],
-            outputs="raw/openaire/researchproduct",
-        ),
-       node(
-            name="land_researchproduct_openaire",
-            func=land_researchproduct_openaire,
-            inputs="raw/openaire/researchproduct",
-            outputs="ldg/openaire/researchproduct"
+            outputs=[
+                "raw/openaire/researchproduct#parquet",
+                "raw/openaire/researchproduct_dev#parquet",
+                ],
         ),
         node(
-            name="land_researchproduct2creator_openaire",
-            func=land_researchproduct2creator_openaire,
-            inputs="raw/openaire/researchproduct",
-            outputs="ldg/openaire/researchproduct2creator"
+            name="land_openaire_researchproduct",
+            func=land_openaire_researchproduct,
+            inputs="raw/openaire/researchproduct#parquet",
+            outputs=[
+                "ldg/openaire/researchproduct",
+                "ldg/openaire/researchproduct2originalId",
+                "ldg/openaire/researchproduct2author",
+                "ldg/openaire/researchproduct2subject",
+                "ldg/openaire/researchproduct2pid",
+                "ldg/openaire/researchproduct2url"
+                ]
         ),
-        node(
-            name="land_researchproduct2measure_openaire",
-            func=land_researchproduct2measure_openaire,
-            inputs="raw/openaire/researchproduct",
-            outputs="ldg/openaire/researchproduct2measure"
-        ),
-        node(
-            name="land_researchproduct2pid_openaire",
-            func=land_researchproduct2pid_openaire,
-            inputs="raw/openaire/researchproduct",
-            outputs="ldg/openaire/researchproduct2pid"
-        ),
-        node(
-            name="land_researchproduct2relevantdate_openaire",
-            func=land_researchproduct2relevantdate_openaire,
-            inputs="raw/openaire/researchproduct",
-            outputs="ldg/openaire/researchproduct2relevantdate"
-        ),
-        node(
-            name="land_researchproduct2subject_openaire",
-            func=land_researchproduct2subject_openaire,
-            inputs="raw/openaire/researchproduct",
-            outputs="ldg/openaire/researchproduct2subject"
-        ),
-    ], tags="openaire"
-)
+    ], tags="openaire_researchproduct")

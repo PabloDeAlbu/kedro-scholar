@@ -1,10 +1,7 @@
-import ast
 from datetime import date
-import math
 import pandas as pd
 import requests
 import time
-import xmltodict
 
 def refresh_access_token(refresh_token):
     """Obtiene un nuevo access_token usando el refresh_token."""
@@ -15,114 +12,153 @@ def refresh_access_token(refresh_token):
     else:
         raise Exception(f"Failed to refresh token: {response.status_code}")
 
-def fetch_researchproduct_openaire(dim_doi: pd.DataFrame, r_token, env)-> pd.DataFrame:
-    base_url = "https://api.openaire.eu/search/researchProducts"
-    df_list = []
+def fetch_openaire_researchproduct(filter_label, filter_param, filter_value, access_token, refresh_token, env):
+    cursor = '*'
+    base_url = 'https://api.openaire.eu/graph/researchProducts'
+    iteration_limit = 5
+    iteration_count = 0
+    page_size = 50         # Ajustar según sea necesario
+    max_retries = 5        # Máximo número de reintentos en caso de error 429
+    retry_wait = 5         # Tiempo inicial de espera entre reintentos (segundos)
+    max_refresh_attempts = 3  # Máximo número de intentos para refrescar el token
+    refresh_attempts = 0
 
-    doi_limit = 9999
-    if (env == 'dev'): doi_limit = 9
-    
-    skipped_list = []
+    request_headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
 
-    not_in_openaire = dim_doi['in_openaire'] == False
-    dim_doi = dim_doi[not_in_openaire]
+    query_params = {
+        filter_param: filter_value,
+        "pageSize": page_size,
+        "cursor": cursor
+    }
 
-    doi_list = dim_doi.iloc[0:doi_limit]['doi'].to_list()
-    doi_comma_separated = ','.join(doi_list)
+    while True:
+        response = requests.get(base_url, headers=request_headers, params=query_params)
 
-    # se define cantidad de batches a partir de la cantidad de resultados por batch y cantidad de doi
-    batch_size = 10
-    num_batches = math.ceil(len(doi_list) / batch_size)
+        # Si el token es inválido o expiró, intentar renovarlo
+        if response.status_code == 403:
+            if refresh_attempts >= max_refresh_attempts:
+                raise Exception("Máximo de intentos para refrescar el token alcanzado. Abortando.")
+            print("Access token expired or invalid. Refreshing token...")
+            new_token = refresh_access_token(refresh_token)
+            if not new_token:
+                raise Exception("No se pudo refrescar el access token.")
+            access_token = new_token
+            request_headers["Authorization"] = f"Bearer {access_token}"
+            refresh_attempts += 1
+            continue  # Reintenta la solicitud con el nuevo token
 
-    for batch_index in range(num_batches):
+        if response.status_code != 200:
+            raise Exception(f"Failed to retrieve data: {response.status_code}")
 
-        batch = doi_list[batch_index * batch_size : (batch_index + 1) * batch_size]
-        doi_comma_separated = ','.join(batch)
+        # Restablecemos el contador de refrescos al tener una respuesta exitosa
+        refresh_attempts = 0
 
-        graph_url = f"{base_url}?doi={doi_comma_separated}"
-        headers = { 'Authorization': f'Bearer {r_token}' }
+        api_response = response.json()
+        print(f"Iteration count: {iteration_count}")
+        print(f"GET {response.url}")
 
-        api_response = requests.get(graph_url, headers=headers)
-        print(f'GET "{graph_url}" {api_response.status_code}')
+        # Crear DataFrame con el primer bloque de resultados
+        df = pd.DataFrame.from_dict(api_response["results"])
 
-        if api_response.status_code == 200:
-            data_dict = xmltodict.parse(api_response.content)
-            results = data_dict.get('response', {}).get('results', {}).get('result', [])
+        # Actualizar cursor
+        cursor = api_response["header"].get("nextCursor", None)
+        query_params["cursor"] = cursor
 
-            for result in results:
+        # Bucle para iterar con el cursor
+        while cursor:
+            if env == "dev" and iteration_count >= iteration_limit:
+                break
 
-                publication_header = result.get('header', {})
-                publication_metadata = result.get('metadata', {}).get('oaf:entity', {}).get('oaf:result', {})
+            iteration_count += 1
+            print(f"Iteration count: {iteration_count}")
+            print(f"GET {response.url}")
+            time.sleep(2)
 
-                publication = publication_header | publication_metadata 
-                if publication:
-                    df_normalized = pd.json_normalize(publication, max_level=0)
-                    df_list.append(df_normalized)
+            # Reintentos en caso de error 429
+            retries = 0
+            while retries < max_retries:
+                response = requests.get(base_url, headers=request_headers, params=query_params)
+
+                if response.status_code == 403:
+                    if refresh_attempts >= max_refresh_attempts:
+                        raise Exception("Máximo de intentos para refrescar el token alcanzado durante la ejecución. Abortando.")
+                    print("Access token expired during execution. Refreshing token...")
+                    new_token = refresh_access_token(refresh_token)
+                    if not new_token:
+                        raise Exception("No se pudo refrescar el access token durante la ejecución.")
+                    access_token = new_token
+                    request_headers["Authorization"] = f"Bearer {access_token}"
+                    refresh_attempts += 1
+                    continue  # Reintenta con el nuevo token
+
+                if response.status_code == 429:
+                    retries += 1
+                    print(f"Rate limit hit. Retry {retries}/{max_retries}. Waiting {retry_wait} seconds...")
+                    time.sleep(retry_wait)
+                    retry_wait *= 2  # Incremento exponencial del tiempo de espera
                 else:
-                    print("No publication data found in result")
-        else:
-            print(f'Error: Received status code {api_response.status_code}')
-            skipped_list.extend(batch)
-            break
+                    break
 
-    print(f'{len(df_list)} batches processed')
-    print(f'{len(skipped_list)} DOIs skipped')
+            if response.status_code != 200:
+                print(f"Failed to retrieve data at iteration {iteration_count}: {response.status_code}")
+                break
 
-    if df_list:
-        df = pd.concat(df_list, ignore_index=True)
-    else:
-        df = pd.DataFrame()
+            # Restablecer contador de refrescos tras respuesta exitosa
+            refresh_attempts = 0
 
-    return df
+            api_response = response.json()
 
+            if not api_response.get("results"):
+                print("No more results. Stopping iteration.")
+                break
 
-def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
+            df_tmp = pd.DataFrame.from_dict(api_response["results"])
+            df = pd.concat([df, df_tmp], ignore_index=True)
 
-    ## Paso 1: Convierto tipos y selecciono columnas con 
-    # cardinalidad 1 con respecto a cada research product
+            cursor = api_response["header"].get("nextCursor", None)
+            query_params["cursor"] = cursor
 
-    # Comento atributos para dejar en claro que no se procesarán en esta fase.  
-    # Estas columnas pueden incluirse en futuras ingestas según las necesidades de análisis.
+        # Suponiendo que se quiera marcar con la variable filter_value; de lo contrario, ajusta según corresponda.
+        df[filter_label] = True
+
+        return df, df.head(1000)
+
+def land_openaire_researchproduct(df: pd.DataFrame)-> pd.DataFrame:
+
+    df = df.convert_dtypes()
+
     expected_columns = [
-    #       '@xmlns:xsi', 
-        'dri:objIdentifier', 
-        'dri:dateOfCollection',
-        'dri:dateOfTransformation', 
-    #       'collectedfrom', 
-    #       'originalId', 
-    #       'pid',
-    #       'measure', 
-        'fulltext', 
-    #       'title', 
-    #       'bestaccessright', 
-    #       'creator', 
-    #       'country',
-        'dateofacceptance', 
-        'description', 
-    #       'subject', 
-    #       'language',
-    #       'relevantdate', 
-        'publisher', 
-    #       'source', 
-    #       'format', 
-    #       'resulttype',
-    #       'resourcetype', 
-        'isgreen', 
-        'openaccesscolor', 
-        'isindiamondjournal',
-        'publiclyfunded', 
-    #       'journal', 
-    #       'datainfo', 
-    #       'rels', 
-    #       'children', 
-    #       'context',
-    #       'contributor', 
-    #       'embargoenddate', 
-    #       'processingchargeamount',
-    #       'processingchargecurrency', 
-    #       'lastmetadataupdate', 
-    #       'storagedate',
-    #       'version'
+        'author',
+        'openAccessColor',
+        'publiclyFunded',
+        'type',
+        'language',
+        'country',
+        'subjects',
+        'mainTitle',
+        'description',
+        'publicationDate',
+        'format',
+        'bestAccessRight',
+        'id',
+        'originalId',
+        'indicators',
+        'instance',
+        'isGreen',
+        'isInDiamondJournal',
+        'publisher',
+        'source',
+        'container',
+        'contributor',
+        'contactPerson',
+        'coverage',
+        'pid',
+        'url',
+        'contactPerson',
+        'embargoEndDate'
     ]
 
     # Agregar columnas faltantes con NaN
@@ -130,140 +166,82 @@ def land_researchproduct_openaire(df: pd.DataFrame)-> pd.DataFrame:
         if col not in df.columns:
             df[col] = pd.NA
 
-    # Seleccionar solo las columnas esperadas
-    df_researchproduct = df[expected_columns]
+    df_researchproduct = df[expected_columns].copy()
+    df.reset_index(drop=True, inplace=True)
 
-    # Convertir tipos
-    df_researchproduct = df_researchproduct.convert_dtypes()
+    # language
+    df_researchproduct['language_code'] = df_researchproduct['language'].apply(lambda x: x['code'])
+    df_researchproduct['language_label'] = df_researchproduct['language'].apply(lambda x: x['label'])
 
-    # Agregar fecha de carga
-    df_researchproduct['load_datetime'] = date.today()
+    ## bestAccessRight
+    df_researchproduct['bestAccessRight_label'] = df['bestAccessRight'].apply(lambda x: x['label'] if x else None)
+    df_researchproduct['bestAccessRight_scheme'] = df['bestAccessRight'].apply(lambda x: x['scheme'] if x else None)
 
-    return df_researchproduct
+    ## indicators
+    df_indicators = pd.json_normalize(df['indicators']).reset_index(drop=True)
+    df_researchproduct = pd.concat([df_researchproduct.drop(columns=['indicators']).reset_index(drop=True), df_indicators], axis=1)
 
-def land_researchproduct2creator_openaire(df: pd.DataFrame)-> pd.DataFrame:
-    ## Paso 0: Seleccionar columnas con identificador y 'creator'
-    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'creator']]
-    df_researchproduct = df_researchproduct.convert_dtypes()
+    ## author
+    df_researchproduct2author = df.explode('author').reset_index(drop=True)
+    df_researchproduct2author = df_researchproduct2author[['id','author']]
+    df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
+    df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
 
-    ## Paso 1: Asegurarse de que 'creator' sea un diccionario o lista
-    df_researchproduct['creator'] = df_researchproduct['creator'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-    df_researchproduct['creator'] = df_researchproduct['creator'].apply(lambda x: [x] if not isinstance(x, list) else x)
+    ## originalId
+    df_researchproduct2originalId = df.explode('originalId').reset_index(drop=True)
+    df_researchproduct2originalId = df_researchproduct2originalId[['id','originalId']]
 
-    ## Paso 2: Explode la columna 'creator' y reinicia el índice
-    df_researchproduct = df_researchproduct.explode('creator').reset_index(drop=True)
+    # TODO country
 
-    ## Paso 3: Normalizar la columna 'creator' en nuevas columnas
-    creator_expanded = pd.json_normalize(df_researchproduct["creator"])
+    ## subjects
+    df_researchproduct2subject = df.explode('subjects').reset_index(drop=True)
+    df_researchproduct2subject = df_researchproduct2subject[['id','subjects']]
+    df_subjects = pd.json_normalize(df_researchproduct2subject['subjects']).reset_index(drop=True)
+    df_researchproduct2subject = pd.concat([df_researchproduct2subject.drop(columns=['subjects']), df_subjects], axis=1)
 
-    ## Paso 4: Concatenar df_researchproduct con df_creator asegurando que los índices están alineados
-    df_researchproduct2creator = pd.concat([df_researchproduct, creator_expanded], axis=1)
-    df_researchproduct2creator.drop(columns='creator', inplace=True)
+    # TODO description
 
-    ## Paso 5: Agrego load_datetime
-    df_researchproduct2creator['load_datetime'] = date.today()
+    # TODO format
 
-    return df_researchproduct2creator
+    # TODO instance
 
-def land_researchproduct2measure_openaire(df: pd.DataFrame)-> pd.DataFrame:
+    # TODO source
 
-    ## Paso 0: Seleccionar columnas con identificador y 'measure'
-    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'measure']]
-    df_researchproduct = df_researchproduct.convert_dtypes()
-
-    ## Paso 1: Asegurarse de que 'measure' sea un diccionario o lista
-    df_researchproduct['measure'] = df_researchproduct['measure'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-    df_researchproduct['measure'] = df_researchproduct['measure'].apply(lambda x: [x] if not isinstance(x, list) else x)
-
-    ## Paso 2: Explode la columna 'measure' y reinicia el índice
-    df_researchproduct = df_researchproduct.explode('measure').reset_index(drop=True)
-
-    ## Paso 3: Normalizar la columna 'measure' en nuevas columnas
-    measure_expanded = pd.json_normalize(df_researchproduct["measure"])
-
-    ## Paso 4: Concatenar asegurando que los índices están alineados
-    df_researchproduct2measure = pd.concat([df_researchproduct, measure_expanded], axis=1)
-    df_researchproduct2measure.drop(columns='measure', inplace=True)
-
-    # Paso 5: Agrego load_datetime
-    df_researchproduct2measure['load_datetime'] = date.today()
-    return df_researchproduct2measure
-
-
-def land_researchproduct2pid_openaire(df: pd.DataFrame)-> pd.DataFrame:
-    # FIXME chequear si existe pid
+    # TODO container
     
-    ## Paso 1: Seleccionar columnas con identificador y pid
-    df_researchproduct = df.loc[:,['dri:objIdentifier', 'pid']]
-    df_researchproduct = df_researchproduct.convert_dtypes()
+    # TODO contributor
+    
+    # TODO contactPerson
 
-    ## Paso 2: Asegurarse de que 'pid' sea un diccionario o lista
-    df_researchproduct['pid'] = df_researchproduct['pid'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-    df_researchproduct['pid'] = df_researchproduct['pid'].apply(lambda x: [x] if not isinstance(x, list) else x)
+    # TODO coverage
+    
+    # pid
+    df_researchproduct2pid = df.explode('pid').reset_index(drop=True)
+    df_researchproduct2pid = df_researchproduct2pid[['id','pid']]
+    df_pid = pd.json_normalize(df_researchproduct2pid['pid']).reset_index(drop=True)
+    df_researchproduct2pid = pd.concat([df_researchproduct2pid.drop(columns=['pid']), df_pid], axis=1)
 
-    ## Paso 3: Explode la columna 'pid' y reinicia el índice
-    df_researchproduct = df_researchproduct.explode('pid').reset_index(drop=True)
+    # url
+    df_researchproduct2instance = df.explode('instance').reset_index(drop=True)
+    df_researchproduct2instance = df_researchproduct2instance[['id','instance']]
+    df_instance = pd.json_normalize(df_researchproduct2instance['instance']).reset_index(drop=True)
+    df_researchproduct2instance = pd.concat([df_researchproduct2instance.drop(columns=['instance']), df_instance], axis=1)
+    df_researchproduct2url = df_researchproduct2instance[['id','url']]
+    df_researchproduct2url = df_researchproduct2url.explode('url')
 
-    ## Paso 4: Normalizar la columna 'pid' en nuevas columnas
-    pid_expanded = pd.json_normalize(df_researchproduct["pid"])
+    ## drop de columnas procesadas en otros df
+    df_researchproduct.drop(columns=[
+        'author', 'country', 'subjects','bestAccessRight', 
+        'language', 'format', 'instance', 'originalId', 
+        'container', 'source', 'pid', 'description',
+        'contributor', 'contactPerson', 'coverage'
+        ], inplace=True)
 
-    ## Paso 5: Eliminar columnas no deseadas de 'pid'
-    pid_expanded.drop(columns=['@classname', '@schemeid', '@schemename', '@inferred', '@provenanceaction', '@trust'], inplace=True)
-
-    ## Paso 6: Concatenar asegurando que los índices están alineados
-    df_researchproduct2pid = pd.concat([df_researchproduct, pid_expanded], axis=1)
-    df_researchproduct2pid.drop(columns='pid', inplace=True)
-
-    ## Paso 7: Agrego load_datetime 
-    df_researchproduct2pid['load_datetime'] = date.today() 
-    return df_researchproduct2pid
-
-def land_researchproduct2relevantdate_openaire(df: pd.DataFrame)-> pd.DataFrame:
-
-    ## Paso 0: Seleccionar columnas con identificador y 'relevantdate'
-    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'relevantdate']]
-    df_researchproduct = df_researchproduct.convert_dtypes()
-
-    ## Paso 1: Asegurarse de que 'relevantdate' sea un diccionario o lista
-    df_researchproduct['relevantdate'] = df_researchproduct['relevantdate'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-    df_researchproduct['relevantdate'] = df_researchproduct['relevantdate'].apply(lambda x: [x] if not isinstance(x, list) else x)
-
-    ## Paso 2: Explode la columna 'relevantdate' y reinicia el índice
-    df_researchproduct = df_researchproduct.explode('relevantdate').reset_index(drop=True)
-
-    ## Paso 3: Normalizar la columna 'measure' en nuevas columnas
-    relevantdate_expanded = pd.json_normalize(df_researchproduct["relevantdate"])
-
-    ## Paso 4: Concatenar df_researchproduct con df_relevantdate asegurando que los índices están alineados
-    df_researchproduct2relevantdate = pd.concat([df_researchproduct, relevantdate_expanded], axis=1)
-    df_researchproduct2relevantdate.drop(columns='relevantdate', inplace=True)
-
-    ## Paso 5: Agrego load_datetime
-    df_researchproduct2relevantdate['load_datetime'] = date.today()
-
-    return df_researchproduct2relevantdate
-
-def land_researchproduct2subject_openaire(df: pd.DataFrame)-> pd.DataFrame:
-
-    ## Paso 0: Seleccionar columnas con identificador y 'subject'
-    df_researchproduct = df.loc[:, ['dri:objIdentifier', 'subject']]
-    df_researchproduct = df_researchproduct.convert_dtypes()
-
-    ## Paso 1: Asegurarse de que 'subject' sea un diccionario o lista
-    df_researchproduct['subject'] = df_researchproduct['subject'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-    df_researchproduct['subject'] = df_researchproduct['subject'].apply(lambda x: [x] if not isinstance(x, list) else x)
-
-    ## Paso 2: Explode la columna 'subject' y reinicia el índice
-    df_researchproduct = df_researchproduct.explode('subject').reset_index(drop=True)
-
-    ## Paso 3: Normalizar la columna 'measure' en nuevas columnas
-    subject_expanded = pd.json_normalize(df_researchproduct["subject"])
-
-    ## Paso 4: Concatenar df_researchproduct con df_subject asegurando que los índices están alineados
-    df_researchproduct2subject = pd.concat([df_researchproduct, subject_expanded], axis=1)
-    df_researchproduct2subject.drop(columns='subject', inplace=True)
-
-    ## Paso 5: Agrego load_datetime
+    df_researchproduct['load_datetime'] = date.today()
+    df_researchproduct2originalId['load_datetime'] = date.today()
+    df_researchproduct2author['load_datetime'] = date.today()
     df_researchproduct2subject['load_datetime'] = date.today()
+    df_researchproduct2pid['load_datetime'] = date.today()
+    df_researchproduct2url['load_datetime'] = date.today()
 
-    return df_researchproduct2subject
+    return df_researchproduct, df_researchproduct2originalId, df_researchproduct2author, df_researchproduct2subject, df_researchproduct2pid, df_researchproduct2url

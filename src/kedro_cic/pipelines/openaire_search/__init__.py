@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'openaire_researchproduct_collectedfrom_datasource'
+This is a boilerplate pipeline 'openaire_search'
 generated using Kedro 0.19.9
 """
 
