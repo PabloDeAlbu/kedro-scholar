@@ -25,14 +25,17 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             name="land_openaire_researchproduct",
             func=land_openaire_researchproduct,
-            inputs="raw/openaire/researchproduct#parquet",
+            inputs=[
+                "params:openaire_fetch_options.filter_label",
+                "raw/openaire/researchproduct#parquet",
+            ],
             outputs=[
                 "ldg/openaire/researchproduct",
-                "ldg/openaire/researchproduct2originalId",
-                "ldg/openaire/researchproduct2author",
-                "ldg/openaire/researchproduct2subject",
-                "ldg/openaire/researchproduct2pid",
-                "ldg/openaire/researchproduct2url"
+                "ldg/openaire/map_researchproduct_originalId",
+                "ldg/openaire/map_researchproduct_author",
+                "ldg/openaire/map_researchproduct_subject",
+                "ldg/openaire/map_researchproduct_pid",
+                "ldg/openaire/map_researchproduct_url"
                 ]
         ),
     ], tags="openaire_researchproduct")

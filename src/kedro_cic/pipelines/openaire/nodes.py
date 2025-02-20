@@ -122,15 +122,16 @@ def fetch_openaire_researchproduct(filter_label, filter_param, filter_value, acc
             query_params["cursor"] = cursor
 
         # Suponiendo que se quiera marcar con la variable filter_value; de lo contrario, ajusta según corresponda.
-        df[filter_label] = True
+        df['filter_applied'] = filter_label
 
         return df, df.head(1000)
 
-def land_openaire_researchproduct(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_researchproduct(filter_value, df: pd.DataFrame)-> pd.DataFrame:
 
     df = df.convert_dtypes()
 
     expected_columns = [
+        'filter_applied',
         'author',
         'openAccessColor',
         'publiclyFunded',
@@ -156,9 +157,8 @@ def land_openaire_researchproduct(df: pd.DataFrame)-> pd.DataFrame:
         'contactPerson',
         'coverage',
         'pid',
-        'url',
         'contactPerson',
-        'embargoEndDate'
+        'embargoEndDate',
     ]
 
     # Agregar columnas faltantes con NaN
@@ -179,6 +179,25 @@ def land_openaire_researchproduct(df: pd.DataFrame)-> pd.DataFrame:
 
     ## indicators
     df_indicators = pd.json_normalize(df['indicators']).reset_index(drop=True)
+    
+    indicators_expected_columns = [
+        "citationImpact.citationClass",
+        "citationImpact.citationCount",
+        "citationImpact.impulse",
+        "citationImpact.impulseClass",
+        "citationImpact.influence",
+        "citationImpact.influenceClass",
+        "citationImpact.popularity",
+        "citationImpact.popularityClass",
+        "usageCounts.downloads",
+        "usageCounts.views",
+    ]
+
+    # Agregar columnas para indicators y faltantes con NaN
+    for col in indicators_expected_columns:
+        if col not in df_indicators.columns:
+            df_indicators[col] = pd.NA
+
     df_researchproduct = pd.concat([df_researchproduct.drop(columns=['indicators']).reset_index(drop=True), df_indicators], axis=1)
 
     ## author
