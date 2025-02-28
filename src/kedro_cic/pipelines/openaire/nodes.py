@@ -12,7 +12,7 @@ def refresh_access_token(refresh_token):
     else:
         raise Exception(f"Failed to refresh token: {response.status_code}")
 
-def fetch_openaire_researchproduct(filter_label, filter_param, filter_value, access_token, refresh_token, env):
+def fetch_openaire_researchproduct(filter_param, filter_value, access_token, refresh_token, env):
     cursor = '*'
     base_url = 'https://api.openaire.eu/graph/researchProducts'
     iteration_limit = 5
@@ -121,12 +121,158 @@ def fetch_openaire_researchproduct(filter_label, filter_param, filter_value, acc
             cursor = api_response["header"].get("nextCursor", None)
             query_params["cursor"] = cursor
 
-        # Suponiendo que se quiera marcar con la variable filter_value; de lo contrario, ajusta según corresponda.
-        df['filter_applied'] = filter_label
-
         return df, df.head(1000)
 
-def land_openaire_researchproduct(filter_value, df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_map_researchproduct_author(df: pd.DataFrame)-> pd.DataFrame:
+
+    expected_columns = [
+        'id',
+        'author',
+    ]
+
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    df = df[expected_columns].copy()
+    df.reset_index(drop=True, inplace=True)
+
+    ## author
+    df_researchproduct2author = df.explode('author').reset_index(drop=True)
+    df_researchproduct2author = df_researchproduct2author[['id','author']]
+    df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
+    df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
+
+    df_researchproduct2author['load_datetime'] = date.today()
+
+    return df_researchproduct2author
+
+def land_openaire_map_researchproduct_instance(df: pd.DataFrame)-> pd.DataFrame:
+
+    expected_columns = [
+        'id',
+        'instance',
+        'url',
+    ]
+
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    df = df[expected_columns].copy()
+    df = df.convert_dtypes()
+    df.reset_index(drop=True, inplace=True)
+
+    # url
+    df_researchproduct2instance = df.explode('instance').reset_index(drop=True)
+    df_researchproduct2instance = df_researchproduct2instance[['id','instance']]
+    df_instance = pd.json_normalize(df_researchproduct2instance['instance']).reset_index(drop=True)
+    df_researchproduct2instance = pd.concat([df_researchproduct2instance.drop(columns=['instance']), df_instance], axis=1)
+
+    df_researchproduct2url = df_researchproduct2instance[['id','url']]
+    df_researchproduct2url = df_researchproduct2url.explode('url')
+
+    df_researchproduct2alternateIdentifier = df_researchproduct2instance[['id','alternateIdentifier']]
+    df_researchproduct2alternateIdentifier = df_researchproduct2alternateIdentifier.explode('alternateIdentifier').reset_index(drop=True)
+    df_alternateIdentifier = pd.json_normalize(df_researchproduct2alternateIdentifier['alternateIdentifier']).reset_index(drop=True)
+    df_researchproduct2alternateIdentifier = pd.concat((df_researchproduct2alternateIdentifier.drop(columns=['alternateIdentifier']), df_alternateIdentifier), axis=1)
+
+    df_researchproduct2url['load_datetime'] = date.today()
+
+    df_researchproduct2instance.drop(columns=['alternateIdentifier','articleProcessingCharge','url','pid'], inplace=True)
+    
+    df_researchproduct2url.dropna(inplace=True)
+    df_researchproduct2alternateIdentifier.dropna(inplace=True)
+    
+    df_researchproduct2instance['load_datetime'] = date.today()
+    df_researchproduct2url['load_datetime'] = date.today()
+    df_researchproduct2alternateIdentifier['load_datetime'] = date.today()
+
+    return df_researchproduct2instance, df_researchproduct2url, df_researchproduct2alternateIdentifier
+
+def land_openaire_map_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFrame:
+
+    expected_columns = [
+        'id',
+        'originalId',
+    ]
+
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    df = df[expected_columns].copy()
+
+    df = df.convert_dtypes()
+
+    df.reset_index(drop=True, inplace=True)
+
+    ## originalId
+    df_researchproduct2originalId = df.explode('originalId').reset_index(drop=True)
+    df_researchproduct2originalId = df_researchproduct2originalId[['id','originalId']]
+
+    df_researchproduct2originalId['load_datetime'] = date.today()
+
+    return df_researchproduct2originalId
+
+def land_openaire_map_researchproduct_pid(df: pd.DataFrame)-> pd.DataFrame:
+
+    expected_columns = [
+        'id',
+        'pid',
+    ]
+
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    df = df.convert_dtypes()
+
+    df = df[expected_columns].copy()
+    df.reset_index(drop=True, inplace=True)
+
+    # pid
+    df_researchproduct2pid = df.explode('pid').reset_index(drop=True)
+    df_researchproduct2pid = df_researchproduct2pid[['id','pid']]
+    df_pid = pd.json_normalize(df_researchproduct2pid['pid']).reset_index(drop=True)
+    df_researchproduct2pid = pd.concat([df_researchproduct2pid.drop(columns=['pid']), df_pid], axis=1)
+
+    df_researchproduct2pid['load_datetime'] = date.today()
+
+    return df_researchproduct2pid
+
+def land_openaire_map_researchproduct_subject(df: pd.DataFrame)-> pd.DataFrame:
+
+    expected_columns = [
+        'id',
+        'subjects',
+    ]
+
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    df = df[expected_columns].copy()
+    df = df.convert_dtypes()
+    df.reset_index(drop=True, inplace=True)
+
+    ## subjects
+    df_researchproduct2subject = df.explode('subjects').reset_index(drop=True)
+    df_researchproduct2subject = df_researchproduct2subject[['id','subjects']]
+    df_subjects = pd.json_normalize(df_researchproduct2subject['subjects']).reset_index(drop=True)
+    df_researchproduct2subject = pd.concat([df_researchproduct2subject.drop(columns=['subjects']), df_subjects], axis=1)
+
+    df_researchproduct2subject['load_datetime'] = date.today()
+
+    return df_researchproduct2subject
+
+
+def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-> pd.DataFrame:
 
     df = df.convert_dtypes()
 
