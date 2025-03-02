@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from pandas import json_normalize
 
-def fetch_author_openalex(institution_ror, env):
+def fetch_openalex_author(institution_ror, env):
     cursor = '*'
     base_url = 'https://api.openalex.org/authors?filter=affiliations.institution.ror:{}&cursor={}'
     iteration_limit = 5
@@ -51,7 +51,7 @@ def clean_work_dataframe(df):
     columns_to_drop = {"abstract_inverted_index", "abstract_inverted_index_v3"}
     return df.drop(columns=columns_to_drop.intersection(df.columns), inplace=False)
 
-def fetch_work_openalex(institution_ror, env):
+def fetch_openalex_work(institution_ror, env):
     session = requests.Session()  # Reutilizar la sesión para eficiencia
     base_url = 'https://api.openalex.org/works?filter=institutions.ror:{}&cursor={}&per-page=200'
     cursor = '*'
@@ -101,7 +101,7 @@ def fetch_work_openalex(institution_ror, env):
 
     return df, df.head(1000)
 
-def land_author_openalex(df: pd.DataFrame)-> pd.DataFrame:
+def land_openalex_author(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.drop(
         columns=[
@@ -123,7 +123,7 @@ def land_author_openalex(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author
 
-def land_author2affiliation_openalex(df: pd.DataFrame)-> pd.DataFrame:
+def land_openalex_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
 
     # Selecciono columna con id de author y afiliación
     df_author = df.loc[:, ['id', 'affiliations']]
@@ -145,7 +145,7 @@ def land_author2affiliation_openalex(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author2affiliation
 
-def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
+def land_openalex_author_topic(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.loc[:,['id', 'topics']]
     df_author = df_author.convert_dtypes() 
@@ -168,34 +168,140 @@ def land_author2topic_openalex(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_author2topic
 
-def land_work_openalex(df_work_raw):
+def land_openalex_work(df_work_raw):
     """Limpia y transforma los datos de OpenAlex para su almacenamiento en una base de datos relacional."""
     
-    # Copia para evitar modificar el DataFrame original
-    df_work = df_work_raw.copy()
+    expected_columns = [
+        'id',
+        # 'doi', # doi existe en ids
+        'title',
+        'display_name',
+        'publication_year',
+        'publication_date',
+        'ids',
+        'language',
+        'primary_location',
+        'type',
+        'type_crossref',
+        # 'indexed_in',
+        'open_access',
+        # 'authorships',
+        # 'institution_assertions',
+        'countries_distinct_count',
+        'institutions_distinct_count',
+        # 'corresponding_author_ids',
+        # 'corresponding_institution_ids',
+        'apc_list',
+        'apc_paid',
+        'fwci',
+        'has_fulltext',
+        'fulltext_origin',
+        'cited_by_count',
+        'citation_normalized_percentile',
+        'cited_by_percentile_year',
+        'biblio',
+        'is_retracted',
+        'is_paratext',
+        'primary_topic',
+        # 'topics',
+        # 'keywords',
+        # 'concepts',
+        # 'mesh',
+        'locations_count',
+        # 'locations',
+        'best_oa_location',
+        # 'sustainable_development_goals',
+        # 'grants',
+        # 'datasets',
+        # 'versions',
+        'referenced_works_count',
+        # 'referenced_works',
+        # 'related_works',
+        # 'abstract_inverted_index',
+        # 'abstract_inverted_index_v3',
+        'cited_by_api_url',
+        # 'counts_by_year',
+        'updated_date',
+        'created_date'
+    ]
 
-    # Lista de columnas a eliminar
-    columns_to_drop = {
-        'authorships', 'institution_assertions', 'citation_normalized_percentile', 
-        'cited_by_percentile_year', 'referenced_works', 'related_works', 'ids', 
-        'primary_location', 'indexed_in', 'corresponding_author_ids', 'corresponding_institution_ids',
-        'apc_list', 'apc_paid', 'biblio', 'primary_topic', 'topics', 'keywords', 
-        'concepts', 'mesh', 'locations', 'best_oa_location', 'sustainable_development_goals',
-        'grants', 'datasets', 'versions', 'abstract_inverted_index', 
-        'abstract_inverted_index_v3', 'counts_by_year', 'open_access'
-    }
+    df_work = df_work_raw.loc[:,expected_columns].reset_index(drop=True).copy()
 
-    # Elimina solo las columnas que existen en el DataFrame
-    df_work.drop(columns=columns_to_drop.intersection(df_work.columns), inplace=True)
+    # Agregar columnas faltantes con NaN
+    for col in expected_columns:
+        if col not in df_work.columns:
+            df_work[col] = pd.NA
 
-    # Expandir la información de 'open_access' si está presente
-    if 'open_access' in df_work.columns:
-        df_openaccess_expanded = pd.json_normalize(df_work['open_access'].dropna())
-        
-        # Solo agrega las columnas si hay datos en open_access
-        if not df_openaccess_expanded.empty:
-            df_work = df_work.drop(columns=['open_access'])
-            df_work = pd.concat([df_work, df_openaccess_expanded], axis=1)
+    # ids
+    df_ids = pd.json_normalize(df_work['ids']).reset_index(drop=True)
+    df_work = pd.concat([df_work, df_ids], axis=1)
+    df_work.drop(columns=['ids'], inplace=True)    
+
+    # primary_location
+    df_primary_location = pd.json_normalize(df_work['primary_location']).reset_index(drop=True)
+    df_primary_location.rename(columns=lambda col: f'primary_location.{col}', inplace=True)
+    df_primary_location.drop(columns=[
+        'primary_location.source.issn',
+        'primary_location.source.host_organization_lineage',
+        'primary_location.source.host_organization_lineage_names'
+        ],
+        inplace=True)
+
+    df_work = pd.concat([df_work, df_primary_location], axis=1)
+    df_work.drop(columns=['primary_location'], inplace=True)    
+
+    # openacess
+    df_openaccess_expanded = pd.json_normalize(df_work['open_access'])
+    df_work = pd.concat([df_work, df_openaccess_expanded], axis=1)
+    df_work.drop(columns=['open_access'], inplace=True)    
+
+    # apc_list
+    df_apc_list = pd.json_normalize(df_work['apc_list'])
+    df_apc_list.rename(columns=lambda col: f'apc_list.{col}', inplace=True)
+    df_work = pd.concat([df_work, df_apc_list], axis=1)
+    df_work.drop(columns=['apc_list'], inplace=True)    
+ 
+    # apc_paid
+    df_apc_paid = pd.json_normalize(df_work['apc_paid'])
+    df_apc_paid.rename(columns=lambda col: f'apc_paid.{col}', inplace=True)
+    df_work = pd.concat([df_work, df_apc_paid], axis=1)
+    df_work.drop(columns=['apc_paid'], inplace=True)    
+ 
+    # citation_normalized_percentile
+    df_citation_normalized_percentile = pd.json_normalize(df_work['citation_normalized_percentile'])
+    df_citation_normalized_percentile.rename(columns=lambda col: f'citation_normalized_percentile.{col}', inplace=True)
+    df_work = pd.concat([df_work, df_citation_normalized_percentile], axis=1)
+    df_work.drop(columns=['citation_normalized_percentile'], inplace=True)    
+
+    # cited_by_percentile_year
+    df_cited_by_percentile_year = pd.json_normalize(df_work['cited_by_percentile_year'])
+    df_cited_by_percentile_year.rename(columns=lambda col: f'cited_by_percentile_year.{col}', inplace=True)
+    df_work = pd.concat([df_work, df_cited_by_percentile_year], axis=1)
+    df_work.drop(columns=['cited_by_percentile_year'], inplace=True)    
+
+    # biblio
+    df_biblio = pd.json_normalize(df_work['biblio'])
+    df_biblio.rename(columns=lambda col: f'biblio.{col}', inplace=True)
+    df_work = pd.concat([df_work, df_biblio], axis=1)
+    df_work.drop(columns=['biblio'], inplace=True)
+
+    # primary_topic
+    df_primary_topic = pd.json_normalize(df_work['primary_topic'])
+    df_primary_topic.rename(columns=lambda col: f'primary_topic.{col}', inplace=True)
+    df_work = pd.concat([df_work, df_primary_topic], axis=1)
+    df_work.drop(columns=['primary_topic'], inplace=True)    
+
+    # best_oa_location
+    df_best_oa_location = pd.json_normalize(df_work['best_oa_location'])
+    df_best_oa_location.rename(columns=lambda col: f'best_oa_location.{col}', inplace=True)
+    df_best_oa_location.drop(columns=[
+        'best_oa_location.source.host_organization_lineage',
+        'best_oa_location.source.host_organization_lineage_names',
+        'best_oa_location.source.issn',
+    ], inplace=True)
+    
+    df_work = pd.concat([df_work, df_best_oa_location], axis=1)
+    df_work.drop(columns=['best_oa_location'], inplace=True)    
 
     # Agregar la fecha de carga con formato datetime
     df_work['load_datetime'] = pd.to_datetime(datetime.today())
@@ -205,29 +311,7 @@ def land_work_openalex(df_work_raw):
 
     return df_work
 
-def land_work2apc_list_openalex(df_work_raw):
-    df_work = df_work_raw.loc[:,['id','apc_list']]
-    df_work = df_work.convert_dtypes()
-
-    df_work2apc_list = pd.json_normalize(df_work['apc_list'])
-    df_work2apc_list = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_list), axis=1)
-    
-    df_work2apc_list['load_datetime'] = pd.to_datetime(datetime.today())
-
-    return df_work2apc_list
-
-def land_work2apc_paid_openalex(df_work_raw):
-    df_work = df_work_raw.loc[:,['id','apc_paid']]
-    df_work = df_work.convert_dtypes()
-
-    df_work2apc_paid = pd.json_normalize(df_work['apc_paid'])
-    df_work2apc_paid = pd.concat((df_work_raw.loc[:,'id'].reset_index(drop=True),df_work2apc_paid), axis=1)
-
-    df_work2apc_paid['load_datetime'] = pd.to_datetime(datetime.today())
-
-    return df_work2apc_paid
-
-def land_work2authorships_openalex(df_work_raw):
+def land_openalex_work_authorships(df_work_raw):
     # Seleccionar las columnas necesarias y convertir los tipos de datos
     df_work2authorships = df_work_raw[['id', 'authorships']].convert_dtypes()
     df_work2authorships.rename(columns={"id": "work_id"}, inplace=True)
@@ -260,17 +344,7 @@ def land_work2authorships_openalex(df_work_raw):
 
     return df_work2author, df_author2institution
 
-def land_work2ids_openalex(df_work_raw):
-    df_work = df_work_raw.loc[:,['id','ids']]
-    df_work = df_work.convert_dtypes()
-
-    df_work2ids = pd.json_normalize(df_work['ids'])
-
-    df_work2ids['load_datetime'] = pd.to_datetime(datetime.today())
-
-    return df_work2ids
-
-def land_work2concepts_openalex(df_work_raw):
+def land_openalex_work_concept(df_work_raw):
     df_work = df_work_raw.loc[:,['id','concepts']]
     df_work = df_work.convert_dtypes()
 
@@ -285,7 +359,7 @@ def land_work2concepts_openalex(df_work_raw):
 
     return df_work2concepts
 
-def land_work2corresponding_author_ids_openalex(df_work_raw):
+def land_openalex_work_corresponding_author_ids(df_work_raw):
     df_work = df_work_raw.loc[:,['id','corresponding_author_ids']]
     df_work = df_work.convert_dtypes()
 
@@ -295,41 +369,7 @@ def land_work2corresponding_author_ids_openalex(df_work_raw):
 
     return df_work2corresponding_author_ids
 
-def land_work2primary_topic_openalex(df_work_raw):
-    df_work = df_work_raw.loc[:,['id','primary_topic']]
-    df_work = df_work.convert_dtypes()
-    df_work2primary_topic_norm = pd.json_normalize(df_work['primary_topic']).loc[:,['id','domain.id','field.id','subfield.id']]
-
-    # 
-    df_work2primary_topic_norm.rename(columns={'id':'topic.id'}, inplace=True)
-    df_work2primary_topic = pd.concat((df_work['id'].reset_index(drop=True),df_work2primary_topic_norm), axis=1)
-
-    df_work2primary_topic['load_datetime'] = pd.to_datetime(datetime.today())
-
-    return df_work2primary_topic
-
-def land_work2primary_location_openalex(df_work_raw):
-    df_work = df_work_raw.loc[:,['id','primary_location']]
-    df_work = df_work.convert_dtypes()
-
-    df_work2primarylocation = pd.json_normalize(df_work['primary_location'])
-    df_work2primarylocation.drop(columns=
-        [
-            'source.host_organization_lineage',
-            'source.host_organization_lineage_names',
-            'source.issn'
-        ],
-        inplace=True
-    )
-
-    df_work = df_work['id'].reset_index(drop=True)
-    df_work2primarylocation = pd.concat((df_work, df_work2primarylocation), axis=1)
-
-    df_work2primarylocation['load_datetime'] = pd.to_datetime(datetime.today())
-
-    return df_work2primarylocation
-
-def land_work2referenced_works_openalex(df_work_raw):
+def land_openalex_work_referenced_works(df_work_raw):
     df_work = df_work_raw.loc[:,['id','referenced_works']]
     df_work = df_work.convert_dtypes()
     df_work2referenced_works_exploded =  df_work.explode('referenced_works')
@@ -340,7 +380,7 @@ def land_work2referenced_works_openalex(df_work_raw):
     return df_work2referenced_works
 
 
-def land_work2topics_openalex(df_work_raw):
+def land_openalex_work_topics(df_work_raw):
     df_work = df_work_raw.loc[:,['id','topics']]
     df_work = df_work.convert_dtypes()
     
@@ -357,7 +397,7 @@ def land_work2topics_openalex(df_work_raw):
 
     return df_work2topics
 
-def land_work2location_openalex(df_work_raw):
+def land_openalex_work_location(df_work_raw):
 
     df_work_location = df_work_raw.explode('locations').reset_index(drop=True)
 
