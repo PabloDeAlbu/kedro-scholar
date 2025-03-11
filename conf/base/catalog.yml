@@ -66,4 +66,7 @@
   table_name: "{dataset}"
   load_args:
     schema: "stg"
+  save_args:
+    schema: "stg"
+    if_exists: replace
   credentials: dw
