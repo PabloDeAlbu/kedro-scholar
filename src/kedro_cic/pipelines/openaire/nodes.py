@@ -274,26 +274,19 @@ def land_openaire_map_researchproduct_subject(df: pd.DataFrame)-> pd.DataFrame:
 
 def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-> pd.DataFrame:
 
-    df = df.convert_dtypes()
-
     expected_columns = [
-        'filter_applied',
-        'author',
+        'id',
         'openAccessColor',
         'publiclyFunded',
         'type',
         'language',
         'country',
-        'subjects',
         'mainTitle',
         'description',
         'publicationDate',
         'format',
         'bestAccessRight',
-        'id',
-        'originalId',
         'indicators',
-        'instance',
         'isGreen',
         'isInDiamondJournal',
         'publisher',
@@ -302,7 +295,6 @@ def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-
         'contributor',
         'contactPerson',
         'coverage',
-        'pid',
         'contactPerson',
         'embargoEndDate',
     ]
@@ -311,6 +303,8 @@ def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-
     for col in expected_columns:
         if col not in df.columns:
             df[col] = pd.NA
+
+    df = df.convert_dtypes()
 
     df_researchproduct = df[expected_columns].copy()
     df.reset_index(drop=True, inplace=True)
@@ -346,67 +340,26 @@ def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-
 
     df_researchproduct = pd.concat([df_researchproduct.drop(columns=['indicators']).reset_index(drop=True), df_indicators], axis=1)
 
-    ## author
-    df_researchproduct2author = df.explode('author').reset_index(drop=True)
-    df_researchproduct2author = df_researchproduct2author[['id','author']]
-    df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
-    df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
-
-    ## originalId
-    df_researchproduct2originalId = df.explode('originalId').reset_index(drop=True)
-    df_researchproduct2originalId = df_researchproduct2originalId[['id','originalId']]
-
     # TODO country
-
-    ## subjects
-    df_researchproduct2subject = df.explode('subjects').reset_index(drop=True)
-    df_researchproduct2subject = df_researchproduct2subject[['id','subjects']]
-    df_subjects = pd.json_normalize(df_researchproduct2subject['subjects']).reset_index(drop=True)
-    df_researchproduct2subject = pd.concat([df_researchproduct2subject.drop(columns=['subjects']), df_subjects], axis=1)
-
     # TODO description
-
     # TODO format
-
     # TODO instance
-
     # TODO source
-
     # TODO container
-    
     # TODO contributor
-    
     # TODO contactPerson
-
     # TODO coverage
-    
-    # pid
-    df_researchproduct2pid = df.explode('pid').reset_index(drop=True)
-    df_researchproduct2pid = df_researchproduct2pid[['id','pid']]
-    df_pid = pd.json_normalize(df_researchproduct2pid['pid']).reset_index(drop=True)
-    df_researchproduct2pid = pd.concat([df_researchproduct2pid.drop(columns=['pid']), df_pid], axis=1)
-
-    # url
-    df_researchproduct2instance = df.explode('instance').reset_index(drop=True)
-    df_researchproduct2instance = df_researchproduct2instance[['id','instance']]
-    df_instance = pd.json_normalize(df_researchproduct2instance['instance']).reset_index(drop=True)
-    df_researchproduct2instance = pd.concat([df_researchproduct2instance.drop(columns=['instance']), df_instance], axis=1)
-    df_researchproduct2url = df_researchproduct2instance[['id','url']]
-    df_researchproduct2url = df_researchproduct2url.explode('url')
 
     ## drop de columnas procesadas en otros df
     df_researchproduct.drop(columns=[
-        'author', 'country', 'subjects','bestAccessRight', 
-        'language', 'format', 'instance', 'originalId', 
-        'container', 'source', 'pid', 'description',
+        'country', 'bestAccessRight', 
+        'language', 'format',  
+        'container', 'source', 'description',
         'contributor', 'contactPerson', 'coverage'
         ], inplace=True)
 
     df_researchproduct['load_datetime'] = date.today()
-    df_researchproduct2originalId['load_datetime'] = date.today()
-    df_researchproduct2author['load_datetime'] = date.today()
-    df_researchproduct2subject['load_datetime'] = date.today()
-    df_researchproduct2pid['load_datetime'] = date.today()
-    df_researchproduct2url['load_datetime'] = date.today()
 
-    return df_researchproduct, df_researchproduct2originalId, df_researchproduct2author, df_researchproduct2subject, df_researchproduct2pid, df_researchproduct2url
+    df_researchproduct[filter_param] = filter_value
+
+    return df_researchproduct
