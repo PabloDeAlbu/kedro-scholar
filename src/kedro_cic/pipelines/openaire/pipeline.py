@@ -68,6 +68,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openaire_fetch_options.filter_value",
                 "raw/openaire/researchproduct#parquet",
             ],
-            outputs="ldg/openaire/researchproduct"
+            outputs=[
+                "ldg/openaire/researchproduct",
+                "ldg/openaire/map_researchproduct_originalid", 
+                "ldg/openaire/map_researchproduct_author", 
+                "ldg/openaire/map_researchproduct_subject", 
+                "ldg/openaire/map_researchproduct_pid",
+                "ldg/openaire/map_researchproduct_url"
+                ]
         ),
     ], tags="openaire_researchproduct")
