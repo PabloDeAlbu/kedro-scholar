@@ -143,5 +143,6 @@ def get_fact_publication(
 
     # Eliminar columnas terminadas en '_delete'
     fact_publication = fact_publication.loc[:, ~fact_publication.columns.str.endswith('_delete')]
+    fact_publication = fact_publication.loc[:, ~fact_publication.columns.str.endswith('_hk')]
 
     return fact_publication
