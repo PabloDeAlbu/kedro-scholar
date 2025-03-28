@@ -122,20 +122,20 @@ def get_fact_publication_openalex(
     return fact_publication_openalex
 
 def get_fact_publication(
-        fact_publication_openalex, 
-        fact_publication_openaire, 
+        fact_publication_openaire,
+        fact_publication_openalex,
     ):
 
     # Agregar columnas de presencia en cada fuente
-    fact_publication_openalex['in_openalex'] = 1
     fact_publication_openaire['in_openaire'] = 1
+    fact_publication_openalex['in_openalex'] = 1
 
     fact_publication = pd.merge(
-        fact_publication_openalex,
         fact_publication_openaire,
+        fact_publication_openalex,
         on='doi_hk',
         how='outer',
-        suffixes=('','_delete')
+        suffixes=('_delete','')
     )
 
     # Rellenar NaN en in_openaire con 0
