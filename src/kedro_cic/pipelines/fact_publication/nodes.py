@@ -140,9 +140,13 @@ def get_fact_publication(
 
     # Rellenar NaN en in_openaire con 0
     fact_publication['in_openaire'] = fact_publication['in_openaire'].fillna(0).astype(int)
+    fact_publication['cited_by_count'] = fact_publication['cited_by_count'].fillna(0).astype(int)
 
     # Eliminar columnas terminadas en '_delete'
     fact_publication = fact_publication.loc[:, ~fact_publication.columns.str.endswith('_delete')]
     fact_publication = fact_publication.loc[:, ~fact_publication.columns.str.endswith('_hk')]
+
+    # Ordenar por cited_by_count en orden descendente
+    fact_publication = fact_publication.sort_values(by='cited_by_count', ascending=False)
 
     return fact_publication
