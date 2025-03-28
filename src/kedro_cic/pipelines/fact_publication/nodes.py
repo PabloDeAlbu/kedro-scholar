@@ -385,8 +385,8 @@ def get_fact_publication(
     )
 
     # Rellenar NaN en in_openaire con 0
-    fact_publication['in_openaire'] = fact_publication['in_openaire'].fillna('No').astype(int)
-    fact_publication['cited_by_count'] = fact_publication['cited_by_count'].fillna('No').astype(int)
+    fact_publication['in_openaire'] = fact_publication['in_openaire'].fillna('No').astype(str)
+    fact_publication['cited_by_count'] = fact_publication['cited_by_count'].fillna('No').astype(str)
 
     # Completar label_es con label_es_delete si es nulo
     if 'label_es' in fact_publication.columns and 'label_es_delete' in fact_publication.columns:
