@@ -61,12 +61,12 @@
     schema: "stg_{source}"
   credentials: dw
 
-"stg/{dataset}":
+"{datamart}/{dataset}":
   type: pandas.SQLTableDataset
   table_name: "{dataset}"
   load_args:
-    schema: "stg"
+    schema: "{datamart}"
   save_args:
-    schema: "stg"
+    schema: "{datamart}"
     if_exists: replace
   credentials: dw
