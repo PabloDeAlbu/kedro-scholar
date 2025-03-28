@@ -134,7 +134,7 @@ def get_fact_publication(
         fact_publication_openalex,
         fact_publication_openaire,
         on='doi_hk',
-        how='left',
+        how='outer',
         suffixes=('','_delete')
     )
 
