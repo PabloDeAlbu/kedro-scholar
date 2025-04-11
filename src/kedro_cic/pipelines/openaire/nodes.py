@@ -121,6 +121,8 @@ def fetch_openaire_researchproduct(filter_param, filter_value, access_token, ref
             cursor = api_response["header"].get("nextCursor", None)
             query_params["cursor"] = cursor
 
+        df[filter_param] = filter_value
+
         return df, df.head(1000)
 
 def land_openaire_map_researchproduct_author(df: pd.DataFrame)-> pd.DataFrame:
