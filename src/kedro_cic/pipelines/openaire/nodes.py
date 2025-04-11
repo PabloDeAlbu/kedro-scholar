@@ -14,7 +14,7 @@ def refresh_access_token(refresh_token):
 
 def fetch_openaire_researchproduct(filter_param, filter_value, access_token, refresh_token, env):
     cursor = '*'
-    base_url = 'https://api.openaire.eu/graph/researchProducts'
+    base_url = 'https://api.openaire.eu/graph/v1/researchProducts'
     iteration_limit = 5
     iteration_count = 0
     page_size = 50         # Ajustar según sea necesario
