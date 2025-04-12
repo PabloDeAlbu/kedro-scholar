@@ -1,11 +1,11 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     fetch_openaire_researchproduct,
-    land_openaire_map_researchproduct_author,
-    land_openaire_map_researchproduct_instance,
-    land_openaire_map_researchproduct_pid,
-    land_openaire_map_researchproduct_subject,
-    land_openaire_map_researchproduct_originalid,
+    land_openaire_rel_researchproduct_author,
+    land_openaire_rel_researchproduct_instance,
+    land_openaire_rel_researchproduct_pid,
+    land_openaire_rel_researchproduct_subject,
+    land_openaire_rel_researchproduct_originalid,
     land_openaire_researchproduct,
 )
 
@@ -27,38 +27,38 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ],
         ),
         node(
-            name="land_openaire_map_researchproduct_author",
-            func=land_openaire_map_researchproduct_author,
+            name="land_openaire_rel_researchproduct_author",
+            func=land_openaire_rel_researchproduct_author,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/map_researchproduct_author",
+            outputs="ldg/openaire/rel_researchproduct_author",
         ),
         # node(
-        #     name="land_openaire_map_researchproduct_instance",
-        #     func=land_openaire_map_researchproduct_instance,
+        #     name="land_openaire_rel_researchproduct_instance",
+        #     func=land_openaire_rel_researchproduct_instance,
         #     inputs="raw/openaire/researchproduct#parquet",
         #     outputs=[
-        #         "ldg/openaire/map_researchproduct_instance",
-        #         "ldg/openaire/map_researchproduct_url",
-        #         "ldg/openaire/map_researchproduct_alternateidentifier",
+        #         "ldg/openaire/rel_researchproduct_instance",
+        #         "ldg/openaire/rel_researchproduct_url",
+        #         "ldg/openaire/rel_researchproduct_alternateidentifier",
         #     ]
         # ),
         node(
-            name="land_openaire_map_researchproduct_originalid",
-            func=land_openaire_map_researchproduct_originalid,
+            name="land_openaire_rel_researchproduct_originalid",
+            func=land_openaire_rel_researchproduct_originalid,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/map_researchproduct_originalid"
+            outputs="ldg/openaire/rel_researchproduct_originalid"
         ),
         node(
-            name="land_openaire_map_researchproduct_pid",
-            func=land_openaire_map_researchproduct_pid,
+            name="land_openaire_rel_researchproduct_pid",
+            func=land_openaire_rel_researchproduct_pid,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/map_researchproduct_pid"
+            outputs="ldg/openaire/rel_researchproduct_pid"
         ),
         node(
-            name="land_openaire_map_researchproduct_subject",
-            func=land_openaire_map_researchproduct_subject,
+            name="land_openaire_rel_researchproduct_subject",
+            func=land_openaire_rel_researchproduct_subject,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/map_researchproduct_subject"
+            outputs="ldg/openaire/rel_researchproduct_subject"
         ),
         node(
             name="land_openaire_researchproduct",

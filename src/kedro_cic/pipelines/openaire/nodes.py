@@ -125,7 +125,7 @@ def fetch_openaire_researchproduct(filter_param, filter_value, access_token, ref
 
         return df, df.head(1000)
 
-def land_openaire_map_researchproduct_author(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_rel_researchproduct_author(df: pd.DataFrame)-> pd.DataFrame:
 
     df_research_author = df[['id','authors']].explode('authors').reset_index(drop=True)
 
@@ -135,7 +135,7 @@ def land_openaire_map_researchproduct_author(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_research_author
 
-def land_openaire_map_researchproduct_instance(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_rel_researchproduct_instance(df: pd.DataFrame)-> pd.DataFrame:
 
     expected_columns = [
         'id',
@@ -179,7 +179,7 @@ def land_openaire_map_researchproduct_instance(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_researchproduct2instance, df_researchproduct2url, df_researchproduct2alternateIdentifier
 
-def land_openaire_map_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_rel_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFrame:
 
     expected_columns = [
         'id',
@@ -205,7 +205,7 @@ def land_openaire_map_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFram
 
     return df_researchproduct2originalId
 
-def land_openaire_map_researchproduct_pid(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_rel_researchproduct_pid(df: pd.DataFrame)-> pd.DataFrame:
 
     expected_columns = [
         'id',
@@ -232,7 +232,7 @@ def land_openaire_map_researchproduct_pid(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_researchproduct2pid
 
-def land_openaire_map_researchproduct_subject(df: pd.DataFrame)-> pd.DataFrame:
+def land_openaire_rel_researchproduct_subject(df: pd.DataFrame)-> pd.DataFrame:
 
     expected_columns = [
         'id',
