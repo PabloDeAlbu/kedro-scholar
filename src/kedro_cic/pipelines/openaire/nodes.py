@@ -127,28 +127,13 @@ def fetch_openaire_researchproduct(filter_param, filter_value, access_token, ref
 
 def land_openaire_map_researchproduct_author(df: pd.DataFrame)-> pd.DataFrame:
 
-    expected_columns = [
-        'id',
-        'author',
-    ]
+    df_research_author = df[['id','authors']].explode('authors').reset_index(drop=True)
 
-    # Agregar columnas faltantes con NaN
-    for col in expected_columns:
-        if col not in df.columns:
-            df[col] = pd.NA
+    df_authors = pd.json_normalize(df_research_author['authors'])
 
-    df = df[expected_columns].copy()
-    df.reset_index(drop=True, inplace=True)
+    df_research_author = pd.concat([df_research_author['id'], df_authors], axis=1)
 
-    ## author
-    df_researchproduct2author = df.explode('author').reset_index(drop=True)
-    df_researchproduct2author = df_researchproduct2author[['id','author']]
-    df_authors = pd.json_normalize(df_researchproduct2author['author']).reset_index(drop=True)
-    df_researchproduct2author = pd.concat([df_researchproduct2author.drop(columns=['author']), df_authors], axis=1)
-
-    df_researchproduct2author['load_datetime'] = date.today()
-
-    return df_researchproduct2author
+    return df_research_author
 
 def land_openaire_map_researchproduct_instance(df: pd.DataFrame)-> pd.DataFrame:
 
