@@ -32,16 +32,16 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/map_researchproduct_author",
         ),
-        node(
-            name="land_openaire_map_researchproduct_instance",
-            func=land_openaire_map_researchproduct_instance,
-            inputs="raw/openaire/researchproduct#parquet",
-            outputs=[
-                "ldg/openaire/map_researchproduct_instance",
-                "ldg/openaire/map_researchproduct_url",
-                "ldg/openaire/map_researchproduct_alternateidentifier",
-            ]
-        ),
+        # node(
+        #     name="land_openaire_map_researchproduct_instance",
+        #     func=land_openaire_map_researchproduct_instance,
+        #     inputs="raw/openaire/researchproduct#parquet",
+        #     outputs=[
+        #         "ldg/openaire/map_researchproduct_instance",
+        #         "ldg/openaire/map_researchproduct_url",
+        #         "ldg/openaire/map_researchproduct_alternateidentifier",
+        #     ]
+        # ),
         node(
             name="land_openaire_map_researchproduct_originalid",
             func=land_openaire_map_researchproduct_originalid,
