@@ -133,6 +133,8 @@ def land_openaire_rel_researchproduct_authors(df: pd.DataFrame)-> pd.DataFrame:
 
     df_research_author = pd.concat([df_research_author['id'], df_authors], axis=1)
 
+    df_research_author['load_datetime'] = date.today()
+
     return df_research_author
 
 def land_openaire_rel_researchproduct_instances(df: pd.DataFrame)-> pd.DataFrame:
@@ -159,7 +161,10 @@ def land_openaire_rel_researchproduct_instances(df: pd.DataFrame)-> pd.DataFrame
     df_research_alternateidentifiers = pd.concat([df_research_alternateidentifiers['id'], df_alternateidentifiers], axis=1)
 
     df_research_instances.drop(columns=['alternateIdentifiers'], inplace=True)
-    
+
+    df_research_instances['load_datetime'] = date.today()
+    df_research_alternateidentifiers['load_datetime'] = date.today()
+
     return df_research_instances, df_research_alternateidentifiers
 
 def land_openaire_rel_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFrame:
@@ -167,6 +172,8 @@ def land_openaire_rel_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFram
     df_research_originalids = df[['id','originalIds']]
 
     df_research_originalids = df_research_originalids.explode('originalIds').reset_index(drop=True)
+
+    df_research_originalids['load_datetime'] = date.today()
     
     return df_research_originalids
 
@@ -182,12 +189,16 @@ def land_openaire_rel_researchproduct_pids(df: pd.DataFrame)-> pd.DataFrame:
 
     df_research_pid.dropna(inplace=True)
     
+    df_research_pid['load_datetime'] = date.today()
+
     return df_research_pid
 
 def land_openaire_rel_researchproduct_sources(df: pd.DataFrame)-> pd.DataFrame:
 
     df_research_sources = df[['id','sources']]
     df_research_sources = df_research_sources.explode('sources').reset_index(drop=True)
+
+    df_research_sources['load_datetime'] = date.today()
 
     return df_research_sources
 
@@ -199,6 +210,8 @@ def land_openaire_rel_researchproduct_subjects(df: pd.DataFrame)-> pd.DataFrame:
 
     df_subjects = pd.json_normalize(df_research_subjects['subjects'])
     df_research_subjects = pd.concat([df_research_subjects['id'], df_subjects],axis=1)
+
+    df_research_subjects['load_datetime'] = date.today()
 
     return df_research_subjects
 
