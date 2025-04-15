@@ -51,7 +51,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="land_openaire_rel_researchproduct_pid",
             func=land_openaire_rel_researchproduct_pids,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/rel_researchproduct_pid"
+            outputs="ldg/openaire/rel_researchproduct_pids"
         ),
         node(
             name="land_openaire_rel_researchproduct_subjects",
