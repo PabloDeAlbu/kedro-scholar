@@ -1,8 +1,4 @@
-"""
-This is a boilerplate pipeline 'enrich_ir_metadata_from_openalex_openaire'
-generated using Kedro 0.19.9
-"""
-
+from kedro.pipeline import Pipeline, node, pipeline
 from kedro.pipeline import Pipeline, pipeline
 from .nodes import enrich_ir_metadata_from_openalex_openaire
 
