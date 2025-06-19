@@ -1,37 +1,529 @@
 import pandas as pd
 
-def get_fact_publication(hub_openalex_work, sat_openalex_work, sal_openalex_work, hub_openalex_doi, link_openaire_researchproduct_doi, sat_openaire_researchproduct):
+def get_fact_publication_openaire(
+        hub_coar_resourcetype,
+        hub_openaire_doi,
+        hub_openaire_researchproduct,
+        link_coar_openaire_resourcetype,
+        link_openaire_researchproduct_type,
+        link_openaire_researchproduct_doi,
+        sat_coar_resourcetype,
+        sat_openaire_researchproduct,
+    ):
+
+    hub_coar_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_researchproduct.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_coar_openaire_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_type.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    sat_coar_resourcetype.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+    sat_openaire_researchproduct.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+
+    fact_publication_openaire = pd.merge(
+        hub_openaire_researchproduct,
+        link_openaire_researchproduct_type
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_openaire_researchproduct_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_openaire_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_coar_openaire_resourcetype
+    ).drop(columns=['type_hk', 'researchproduct_type_hk', 'link_coar_openaire_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_openaire_researchproduct
+    )
+
+    return fact_publication_openaire
+
+def get_fact_publication_openalex(
+        hub_coar_resourcetype,
+        hub_openalex_work,
+        hub_openalex_work_type,
+        hub_openalex_doi,
+        link_coar_openalex_resourcetype,
+        link_openalex_work_type,
+        sal_openalex_work,
+        sat_coar_resourcetype,
+        sat_openalex_work,
+    ):
+
+    # hubs
+    hub_coar_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_doi.drop(columns=['load_datetime','source'], inplace=True)
+    
+    #links
+    link_coar_openalex_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    link_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    sal_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+
+    # satellites
+    sat_coar_resourcetype.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+    sat_openalex_work.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+
     fact_publication_openalex = pd.merge(
         hub_openalex_work,
+        link_openalex_work_type
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sal_openalex_work
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_openalex_doi
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        link_coar_openalex_resourcetype
+    ).drop(columns=['type_hk', 'work_type_hk', 'link_coar_openalex_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
         sat_openalex_work
-        ).drop(columns=['load_datetime','source', 'hashdiff'])
-
-    fact_publication = pd.merge(
-        fact_publication_openalex[['work_hk','title','type','publication_year','cited_by_count','oa_status']],
-        sal_openalex_work[['work_hk','doi_hk']]
     )
 
-    fact_publication = pd.merge(
-        fact_publication,
-        hub_openalex_doi[['doi_hk','doi']],
-        how='left'
-    )
+    return fact_publication_openalex
 
-    fact_publication = pd.merge(
-        fact_publication,
+import pandas as pd
+
+def get_fact_publication_openaire(
+        hub_coar_resourcetype,
+        hub_openaire_doi,
+        hub_openaire_researchproduct,
+        link_coar_openaire_resourcetype,
+        link_openaire_researchproduct_type,
         link_openaire_researchproduct_doi,
-        on="doi_hk",
-        how='left'
+        sat_coar_resourcetype,
+        sat_openaire_researchproduct,
+    ):
+
+    hub_coar_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_researchproduct.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_coar_openaire_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_type.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    sat_coar_resourcetype.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+    sat_openaire_researchproduct.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+
+    fact_publication_openaire = pd.merge(
+        hub_openaire_researchproduct,
+        link_openaire_researchproduct_type
     )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_openaire_researchproduct_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_openaire_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_coar_openaire_resourcetype
+    ).drop(columns=['type_hk', 'researchproduct_type_hk', 'link_coar_openaire_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_openaire_researchproduct
+    )
+
+    return fact_publication_openaire
+
+def get_fact_publication_openalex(
+        hub_coar_resourcetype,
+        hub_openalex_work,
+        hub_openalex_work_type,
+        hub_openalex_doi,
+        link_coar_openalex_resourcetype,
+        link_openalex_work_type,
+        sal_openalex_work,
+        sat_coar_resourcetype,
+        sat_openalex_work,
+    ):
+
+    # hubs
+    hub_coar_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_doi.drop(columns=['load_datetime','source'], inplace=True)
+    
+    #links
+    link_coar_openalex_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    link_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    sal_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+
+    # satellites
+    sat_coar_resourcetype.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+    sat_openalex_work.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+
+    fact_publication_openalex = pd.merge(
+        hub_openalex_work,
+        link_openalex_work_type
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sal_openalex_work
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_openalex_doi
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        link_coar_openalex_resourcetype
+    ).drop(columns=['type_hk', 'work_type_hk', 'link_coar_openalex_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_openalex_work
+    )
+
+    return fact_publication_openalex
+
+import pandas as pd
+
+def get_fact_publication_openaire(
+        hub_coar_resourcetype,
+        hub_openaire_doi,
+        hub_openaire_researchproduct,
+        link_coar_openaire_resourcetype,
+        link_openaire_researchproduct_type,
+        link_openaire_researchproduct_doi,
+        sat_coar_resourcetype,
+        sat_openaire_researchproduct,
+    ):
+
+    hub_coar_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_researchproduct.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_coar_openaire_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_type.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    sat_coar_resourcetype.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+    sat_openaire_researchproduct.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+
+    fact_publication_openaire = pd.merge(
+        hub_openaire_researchproduct,
+        link_openaire_researchproduct_type
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_openaire_researchproduct_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_openaire_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_coar_openaire_resourcetype
+    ).drop(columns=['type_hk', 'researchproduct_type_hk', 'link_coar_openaire_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_openaire_researchproduct
+    )
+
+    return fact_publication_openaire
+
+def get_fact_publication_openalex(
+        hub_coar_resourcetype,
+        hub_openalex_work,
+        hub_openalex_work_type,
+        hub_openalex_doi,
+        link_coar_openalex_resourcetype,
+        link_openalex_work_type,
+        sal_openalex_work,
+        sat_coar_resourcetype,
+        sat_openalex_work,
+    ):
+
+    # hubs
+    hub_coar_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_doi.drop(columns=['load_datetime','source'], inplace=True)
+    
+    #links
+    link_coar_openalex_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    link_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    sal_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+
+    # satellites
+    sat_coar_resourcetype.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+    sat_openalex_work.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+
+    fact_publication_openalex = pd.merge(
+        hub_openalex_work,
+        link_openalex_work_type
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sal_openalex_work
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_openalex_doi
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        link_coar_openalex_resourcetype
+    ).drop(columns=['type_hk', 'work_type_hk', 'link_coar_openalex_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_openalex_work
+    )
+
+    return fact_publication_openalex
+
+import pandas as pd
+
+def get_fact_publication_openaire(
+        hub_coar_resourcetype,
+        hub_openaire_doi,
+        hub_openaire_researchproduct,
+        link_coar_openaire_resourcetype,
+        link_openaire_researchproduct_type,
+        link_openaire_researchproduct_doi,
+        sat_coar_resourcetype,
+        sat_openaire_researchproduct,
+    ):
+
+    hub_coar_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    hub_openaire_researchproduct.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_coar_openaire_resourcetype.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_type.drop(columns=['load_datetime', 'source'], inplace=True)
+    link_openaire_researchproduct_doi.drop(columns=['load_datetime', 'source'], inplace=True)
+    sat_coar_resourcetype.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+    sat_openaire_researchproduct.drop(columns=['load_datetime', 'source', 'hashdiff'], inplace=True)
+
+    fact_publication_openaire = pd.merge(
+        hub_openaire_researchproduct,
+        link_openaire_researchproduct_type
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_openaire_researchproduct_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_openaire_doi
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        link_coar_openaire_resourcetype
+    ).drop(columns=['type_hk', 'researchproduct_type_hk', 'link_coar_openaire_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openaire = pd.merge(
+        fact_publication_openaire,
+        sat_openaire_researchproduct
+    )
+
+    return fact_publication_openaire
+
+def get_fact_publication_openalex(
+        hub_coar_resourcetype,
+        hub_openalex_work,
+        hub_openalex_work_type,
+        hub_openalex_doi,
+        link_coar_openalex_resourcetype,
+        link_openalex_work_type,
+        sal_openalex_work,
+        sat_coar_resourcetype,
+        sat_openalex_work,
+    ):
+
+    # hubs
+    hub_coar_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    hub_openalex_doi.drop(columns=['load_datetime','source'], inplace=True)
+    
+    #links
+    link_coar_openalex_resourcetype.drop(columns=['load_datetime','source'], inplace=True)
+    link_openalex_work_type.drop(columns=['load_datetime','source'], inplace=True)
+    sal_openalex_work.drop(columns=['load_datetime','source'], inplace=True)
+
+    # satellites
+    sat_coar_resourcetype.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+    sat_openalex_work.drop(columns=['load_datetime','source','hashdiff'], inplace=True)
+
+    fact_publication_openalex = pd.merge(
+        hub_openalex_work,
+        link_openalex_work_type
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sal_openalex_work
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_openalex_doi
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        link_coar_openalex_resourcetype
+    ).drop(columns=['type_hk', 'work_type_hk', 'link_coar_openalex_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        hub_coar_resourcetype
+    )
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_coar_resourcetype
+    ).drop(columns=['coar_hk'])
+
+    fact_publication_openalex = pd.merge(
+        fact_publication_openalex,
+        sat_openalex_work
+    )
+
+    return fact_publication_openalex
+
+def get_fact_publication(
+        fact_publication_openaire,
+        fact_publication_openalex,
+    ):
+
+    # Agregar columnas de presencia en cada fuente
+    fact_publication_openaire['in_openaire'] = 1
+    fact_publication_openalex['in_openalex'] = 1
 
     fact_publication = pd.merge(
-        fact_publication,
-        sat_openaire_researchproduct[['researchproduct_hk','citation_count','citation_class','impulse','impulse_class','influence','influence_class','popularity','popularity_class','downloads','views']],
-        on="researchproduct_hk",
-        how='left'
+        fact_publication_openalex,
+        fact_publication_openaire,
+        on='doi_hk',
+        how='outer',
+        suffixes=('','_delete')
     )
 
-    fact_publication.rename(columns={'citation_count': 'citation_count_openaire'}, inplace=True)
-    fact_columns = ['title','publication_year','type','cited_by_count','oa_status','citation_count_openaire','downloads','views','citation_class','impulse','impulse_class','influence','influence_class','popularity','popularity_class']
-    fact_publication = fact_publication[fact_columns].sort_values('cited_by_count', ascending=False)
+    # Rellenar NaN en in_openaire con 0
+    fact_publication['in_openaire'] = fact_publication['in_openaire'].fillna(0).astype(int)
+    fact_publication['cited_by_count'] = fact_publication['cited_by_count'].fillna(0).astype(int)
+
+    # Completar label_es con label_es_delete si es nulo
+    if 'label_es' in fact_publication.columns and 'label_es_delete' in fact_publication.columns:
+        fact_publication['label_es'] = fact_publication['label_es'].fillna(fact_publication['label_es_delete'])
+
+    # Completar coar_uri con coar_uri_delete si es nulo
+    if 'coar_uri' in fact_publication.columns and 'coar_uri_delete' in fact_publication.columns:
+        fact_publication['coar_uri'] = fact_publication['coar_uri'].fillna(fact_publication['coar_uri_delete'])
+
+    # Eliminar columnas terminadas en '_delete'
+    fact_publication = fact_publication.loc[:, ~fact_publication.columns.str.endswith('_delete')]
+    fact_publication = fact_publication.loc[:, ~fact_publication.columns.str.endswith('_hk')]
+
+    # Ordenar por cited_by_count en orden descendente
+    fact_publication = fact_publication.sort_values(by='cited_by_count', ascending=False)
+
     return fact_publication
