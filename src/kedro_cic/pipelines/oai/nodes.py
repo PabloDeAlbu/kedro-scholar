@@ -11,8 +11,10 @@ def get_oai_records(base_url):
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    print(f"Sleeping for {elapsed_time:.2f} seconds")
-    time.sleep(elapsed_time)
+    # Esperar el doble del tiempo de la solicitud + un delay fijo (ej. 1 segundo)
+    delay = max(2 * elapsed_time, 1.0)  # Al menos 1 segundo de espera
+    print(f"Sleeping for {delay:.2f} seconds")
+    time.sleep(delay)
 
     if response.status_code == 200:
         return response
@@ -40,7 +42,25 @@ def parse_oai_response(xml_data):
 
     return records
 
-def fetch_item_oai(base_url, context, env):
+
+# Helper to safely get nth element from lists or tuples
+
+def get_nth(x, n):
+    if isinstance(x, (list, tuple)) and len(x) > n:
+        return x[n]
+    return None
+
+# Helper to explode a column into its own dataframe
+
+def explode_column(df_raw, col, new_col_name):
+    df = df_raw[['handle', col]] \
+        .dropna(subset=[col]) \
+        .explode(col) 
+    df = df.rename(columns={col: new_col_name})
+    df['load_datetime'] = date.today()
+    return df
+
+def fetch_oai_items(base_url, context, env):
     
     resumption_token = '0'
     params = f'/{context}?verb=ListRecords&resumptionToken=oai_dc////'
@@ -74,7 +94,129 @@ def fetch_item_oai(base_url, context, env):
     df = pd.DataFrame(items)
     return df
 
-def land_item_oai(df_item_raw):
+def fetch_oai_item_by_set(base_url: str, context: str, set_id: str, metadata_format: str, env: str) -> pd.DataFrame:
+    records = []
+    resumption_token = 0
+    iteration_limit = 2
+    iteration_count = 0
+   
+    while True:
+        if env == 'dev' and iteration_count >= iteration_limit:
+            break
+
+        params = f'/{context}?verb=ListRecords&resumptionToken={metadata_format}///{set_id}/{resumption_token}'
+        url = base_url + params
+        
+        print(f"Consultando: {url}")
+        
+        response = get_oai_records(url)
+
+        resumption_token += 100
+        iteration_count += 1
+
+        if not response or not response.ok:
+            print(f"Error al consultar: {url}")
+            break
+
+        xml_content = response.text
+        root = ET.fromstring(xml_content)
+        ns = {
+            'oai': 'http://www.openarchives.org/OAI/2.0/',
+            'dc': 'http://purl.org/dc/elements/1.1/'
+        }
+
+        record_nodes = root.findall('.//oai:record', ns)
+
+
+        if not record_nodes:
+            print("No se encontraron más registros.")
+            break
+
+        for record in record_nodes:
+            identifier = record.find('.//oai:identifier', ns)
+            item_id = identifier.text if identifier is not None else None
+            metadata = record.find('.//oai:metadata', ns)
+
+            if metadata is None:
+                continue
+
+            # Valores simples
+            title = metadata.find('.//dc:title', ns)
+            date = metadata.find('.//dc:date', ns)
+
+            # Multivaluados
+            creators = [e.text for e in metadata.findall('.//dc:creator', ns)]
+            types = [e.text for e in metadata.findall('.//dc:type', ns)]
+            identifiers = [e.text for e in metadata.findall('.//dc:identifier', ns)]
+            languages = [e.text for e in metadata.findall('.//dc:language', ns)]
+            publishers = [e.text for e in metadata.findall('.//dc:publisher', ns)]
+            subjects = [e.text for e in metadata.findall('.//dc:subject', ns)]
+            relations = [e.text for e in metadata.findall('.//dc:relation', ns)]
+            rights = [e.text for e in metadata.findall('.//dc:rights', ns)]
+
+            records.append({
+                'item_id': item_id,
+                'col_id': set_id,
+                'title': title.text if title is not None else None,
+                'date': date.text if date is not None else None,
+                'creators': creators,
+                'types': types,
+                'identifiers': identifiers,
+                'languages': languages,
+                'subjects': subjects,
+                'publishers': publishers,
+                'relations': relations,
+                'rights': rights
+            })
+
+    df = pd.DataFrame(records)
+
+    return df, df.head(100)
+
+def fetch_oai_sets(base_url, context, env):
+
+    resumption_token = 0
+    all_sets = []
+
+    iteration_limit = 2
+    iteration_count = 0
+
+    while True:
+
+        if env == 'dev' and iteration_count >= iteration_limit:
+            break
+
+        params = f'/{context}?verb=ListSets&resumptionToken=////{resumption_token}'
+        url = base_url + params
+
+        print(f"Consultando: {url}")
+
+        response = get_oai_records(url)
+        if not response:
+            break
+
+        xml_content = response.text
+        root = ET.fromstring(xml_content)
+        ns = {'oai': 'http://www.openarchives.org/OAI/2.0/'}
+
+        sets_data = []
+        for set_elem in root.findall('.//oai:set', ns):
+            set_spec = set_elem.find('oai:setSpec', ns).text if set_elem.find('oai:setSpec', ns) is not None else None
+            set_name = set_elem.find('oai:setName', ns).text if set_elem.find('oai:setName', ns) is not None else None
+            sets_data.append({'setSpec': set_spec, 'setName': set_name})
+
+        if not sets_data:
+            print("No se encontraron más sets.")
+            break
+
+        all_sets.extend(sets_data)
+        resumption_token += 100  # avanzar manualmente
+        iteration_count += 1
+
+    df_sets = pd.DataFrame(all_sets)
+    return df_sets
+
+def land_items_oai(df_item_raw):
 
     df_item = pd.DataFrame()
     df_item['title'] = df_item_raw['title'].apply(lambda x: x[0] if x is not None and len(x) > 0 else None)
@@ -144,3 +286,68 @@ def land_item_oai(df_item_raw):
     df_item_relation.rename(columns={'relation':'relation_uri'}, inplace=True)
 
     return df_item, df_item_creator, df_item_contributor, df_item_language, df_item_subject, df_item_relation
+
+from datetime import date
+import pandas as pd
+
+# Helper to safely get nth element from lists or tuples
+
+def get_nth(x, n):
+    try:
+        if x is not None and len(x) > n:
+            return x[n]
+    except Exception:
+        pass
+    return None
+
+# Helper to explode a column into its own dataframe
+
+def explode_column(df_raw, col, new_col_name):
+    df = df_raw[['handle', col]] \
+        .dropna(subset=[col]) \
+        .explode(col) 
+    df = df.rename(columns={col: new_col_name})
+    df['load_datetime'] = date.today()
+    return df
+
+
+
+def land_oai_item_by_set(df_item_raw):
+    # Compute handle once
+    df = df_item_raw.copy()
+    df['handle'] = df_item_raw['identifiers'].apply(lambda x: x[0] if x is not None and len(x) > 0 else None)
+
+    # Main item table
+    df_item = pd.DataFrame({
+        'item_id': df['item_id'],
+        'handle':      df['handle'],
+        'col_id':      df['col_id'],
+        'title':       df['title'],
+        'date_issued': df['date'],
+        'type_openaire':    df['types'].apply(lambda x: get_nth(x, 0)),
+        'type_snrd':        df['types'].apply(lambda x: get_nth(x, 1)),
+        'version':          df['types'].apply(lambda x: get_nth(x, 2)),
+        'access_right':     df['rights'].apply(lambda x: get_nth(x, 0)),
+        'license_condition':df['rights'].apply(lambda x: get_nth(x, 1)),
+    })
+    df_item['load_datetime'] = date.today()
+
+    # Explode multivalued fields
+    df_item_creator   = explode_column(df, 'creators',  'creator')
+    df_item_language  = explode_column(df, 'languages', 'language_iso')
+    df_item_subject   = explode_column(df, 'subjects',  'subject')
+    df_item_publisher = explode_column(df, 'publishers','publisher')
+    df_item_relation  = explode_column(df, 'relations','relation')
+    
+    # Clean up relation URLs
+    df_item_relation['relation'] = df_item_relation['relation'] \
+        .str.replace('info:eu-repo/semantics/altIdentifier/url/', '', regex=False)
+
+    return (
+        df_item,
+        df_item_creator,
+        df_item_language,
+        df_item_subject,
+        df_item_relation,
+        df_item_publisher
+    )
