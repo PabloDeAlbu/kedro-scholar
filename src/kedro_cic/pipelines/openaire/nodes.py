@@ -209,6 +209,15 @@ def land_openaire_rel_researchproduct_sources(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_research_sources
 
+def land_openaire_rel_researchproduct_sources(df: pd.DataFrame)-> pd.DataFrame:
+
+    df_research_sources = df[['id','sources']]
+    df_research_sources = df_research_sources.explode('sources').reset_index(drop=True)
+
+    df_research_sources['load_datetime'] = date.today()
+
+    return df_research_sources
+
 def land_openaire_rel_researchproduct_subjects(df: pd.DataFrame)-> pd.DataFrame:
 
     df_research_subjects = df[['id','subjects']]
