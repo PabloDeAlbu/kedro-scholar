@@ -202,16 +202,8 @@ def land_openaire_rel_researchproduct_pids(df: pd.DataFrame)-> pd.DataFrame:
 
 def land_openaire_rel_researchproduct_sources(df: pd.DataFrame)-> pd.DataFrame:
 
-    df_research_sources = df[['id','sources']]
-    df_research_sources = df_research_sources.explode('sources').reset_index(drop=True)
-
-    df_research_sources['load_datetime'] = date.today()
-
-    return df_research_sources
-
-def land_openaire_rel_researchproduct_sources(df: pd.DataFrame)-> pd.DataFrame:
-
-    df_research_sources = df[['id','sources']]
+    df_research_sources = df[['id','sources']].copy()
+    df_research_sources.dropna(inplace=True)
     df_research_sources = df_research_sources.explode('sources').reset_index(drop=True)
 
     df_research_sources['load_datetime'] = date.today()
