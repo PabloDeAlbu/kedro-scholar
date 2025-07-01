@@ -153,6 +153,9 @@ def land_openaire_rel_researchproduct_descriptions(df: pd.DataFrame)-> pd.DataFr
 
     df_research_description = df_research_description.explode('descriptions').reset_index(drop=True)
    
+    # remove null caracters
+    df_research_description['descriptions'] = df_research_description['descriptions'].astype(str).str.replace('\x00', '', regex=False)
+
     df_research_description['load_datetime'] = date.today()
 
     return df_research_description
