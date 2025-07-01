@@ -137,6 +137,13 @@ def land_openaire_rel_researchproduct_authors(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_research_author
 
+def land_openaire_rel_researchproduct_contributors(df: pd.DataFrame)-> pd.DataFrame:
+
+    df_research_contributor = df[['id','contributors']].explode('contributors').reset_index(drop=True)
+
+    return df_research_contributor
+
+
 def land_openaire_rel_researchproduct_instances(df: pd.DataFrame)-> pd.DataFrame:
     
     df_research_instances = df[['id','instances']]
@@ -195,7 +202,8 @@ def land_openaire_rel_researchproduct_pids(df: pd.DataFrame)-> pd.DataFrame:
 
 def land_openaire_rel_researchproduct_sources(df: pd.DataFrame)-> pd.DataFrame:
 
-    df_research_sources = df[['id','sources']]
+    df_research_sources = df[['id','sources']].copy()
+    df_research_sources.dropna(inplace=True)
     df_research_sources = df_research_sources.explode('sources').reset_index(drop=True)
 
     df_research_sources['load_datetime'] = date.today()
@@ -240,6 +248,7 @@ def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-
         'coverage',
         'contactPerson',
         'embargoEndDate',
+        'dateOfCollection',        
     ]
 
     # Agregar columnas faltantes con NaN
@@ -250,12 +259,16 @@ def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-
     df = df.convert_dtypes()
 
     df_researchproduct = df[expected_columns].copy()
-    df.reset_index(drop=True, inplace=True)
+    df_researchproduct.reset_index(drop=True, inplace=True)
 
     # language
+    df_researchproduct['language'] = df_researchproduct['language'].apply(
+        lambda x: x if isinstance(x, dict) else {}
+    )
     df_researchproduct['language_code'] = df_researchproduct['language'].apply(lambda x: x['code'])
     df_researchproduct['language_label'] = df_researchproduct['language'].apply(lambda x: x['label'])
 
+    
     ## bestAccessRight
     df_researchproduct['bestAccessRight_label'] = df['bestAccessRight'].apply(lambda x: x['label'] if x else None)
     df_researchproduct['bestAccessRight_scheme'] = df['bestAccessRight'].apply(lambda x: x['scheme'] if x else None)
@@ -287,7 +300,6 @@ def land_openaire_researchproduct(filter_param, filter_value, df: pd.DataFrame)-
     # TODO description
     # TODO format
     # TODO instance
-    # TODO source
     # TODO container
     # TODO contributor
     # TODO contactPerson
