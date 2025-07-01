@@ -144,6 +144,19 @@ def land_openaire_rel_researchproduct_contributors(df: pd.DataFrame)-> pd.DataFr
     return df_research_contributor
 
 
+def land_openaire_rel_researchproduct_descriptions(df: pd.DataFrame)-> pd.DataFrame:
+
+    if 'descriptions' not in df.columns:
+        return pd.DataFrame(columns=['id', 'descriptions', 'load_datetime'])
+
+    df_research_description = df[['id','descriptions']]
+
+    df_research_description = df_research_description.explode('descriptions').reset_index(drop=True)
+   
+    df_research_description['load_datetime'] = date.today()
+
+    return df_research_description
+
 def land_openaire_rel_researchproduct_instances(df: pd.DataFrame)-> pd.DataFrame:
     
     df_research_instances = df[['id','instances']]

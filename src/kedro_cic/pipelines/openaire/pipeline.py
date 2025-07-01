@@ -3,11 +3,12 @@ from .nodes import (
     fetch_openaire_researchproduct,
     land_openaire_rel_researchproduct_authors,
     land_openaire_rel_researchproduct_contributors,
+    land_openaire_rel_researchproduct_descriptions,
     land_openaire_rel_researchproduct_instances,
+    land_openaire_rel_researchproduct_originalid,
     land_openaire_rel_researchproduct_pids,
     land_openaire_rel_researchproduct_sources,
     land_openaire_rel_researchproduct_subjects,
-    land_openaire_rel_researchproduct_originalid,
     land_openaire_researchproduct,
 )
 
@@ -33,6 +34,22 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=land_openaire_rel_researchproduct_authors,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/rel_researchproduct_authors",
+        ),
+        node(
+            name="land_openaire_rel_researchproduct_contributors",
+            func=land_openaire_rel_researchproduct_contributors,
+            inputs="raw/openaire/researchproduct#parquet",
+            outputs="ldg/openaire/rel_researchproduct_contributors"
+        ),
+        node(
+            name="land_openaire_rel_researchproduct_descriptions",
+            func=land_openaire_rel_researchproduct_descriptions,
+            inputs=[
+                "params:openaire_fetch_options.filter_param",
+                "params:openaire_fetch_options.filter_value",
+                "raw/openaire/researchproduct#parquet",
+            ],
+            outputs="ldg/openaire/researchproduct"
         ),
         node(
             name="land_openaire_rel_researchproduct_instances",
@@ -66,12 +83,6 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=land_openaire_rel_researchproduct_subjects,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/rel_researchproduct_subjects"
-        ),
-        node(
-            name="land_openaire_rel_researchproduct_contributors",
-            func=land_openaire_rel_researchproduct_contributors,
-            inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/rel_researchproduct_contributors"
         ),
         node(
             name="land_openaire_researchproduct",
