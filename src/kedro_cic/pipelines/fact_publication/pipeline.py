@@ -19,7 +19,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 'stg_openaire/sat_openaire_researchproduct',
 
             ],
-            outputs="dm/fact_publication_openaire"
+            outputs="dm_unlp/fact_publication_openaire"
         ),
         node(
             name="get_fact_publication_openalex",
@@ -35,16 +35,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                 'stg_coar/sat_coar_resourcetype',
                 'stg_openalex/sat_openalex_work',
             ],
-            outputs="dm/fact_publication_openalex"
+            outputs="dm_unlp/fact_publication_openalex"
         ),
         node(
             name="get_fact_publication",
             func=get_fact_publication,
             inputs=[
-                "dm/fact_publication_openaire", 
-                "dm/fact_publication_openalex", 
+                "dm_unlp/fact_publication_openaire", 
+                "dm_unlp/fact_publication_openalex", 
             ],
-            outputs="dm/fact_publication"
+            outputs="dm_unlp/fact_publication"
         ),
         
     ], tags="fact_publication")

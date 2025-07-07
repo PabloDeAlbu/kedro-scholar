@@ -70,3 +70,10 @@
     schema: "dm"
     if_exists: replace
   credentials: dw
+
+"dm_{source}/{dataset}":
+  type: pandas.SQLTableDataset
+  table_name: "{dataset}"
+  load_args:
+    schema: "dm_{source}"
+  credentials: dw
