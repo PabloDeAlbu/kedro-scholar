@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 import time
-from datetime import datetime
+from datetime import datetime, date
 from pandas import json_normalize
 
 def fetch_openalex_author(institution_ror, env):
@@ -312,6 +312,7 @@ def land_openalex_work(df_work_raw):
     return df_work
 
 def land_openalex_work_authorships(df_work_raw):
+
     # Seleccionar las columnas necesarias y convertir los tipos de datos
     df_work2authorships = df_work_raw[['id', 'authorships']].convert_dtypes()
     df_work2authorships.rename(columns={"id": "work_id"}, inplace=True)
@@ -322,7 +323,7 @@ def land_openalex_work_authorships(df_work_raw):
     # Normalizar la información de authorships
     df_authorships_norm = pd.json_normalize(df_work2authorships_exploded['authorships'])
     df_authorships_norm.rename(columns={"author.id": "author_id"}, inplace=True)
-
+    
     # Combinar work_id con la información normalizada de authorships
     df_work2authorships = df_work2authorships_exploded[['work_id']].join(df_authorships_norm)
 
@@ -330,19 +331,23 @@ def land_openalex_work_authorships(df_work_raw):
     df_work2author = df_work2authorships[['work_id', 'author_id', 'author_position']]
 
     # Expandir la lista de instituciones asociadas a cada autor
-    df_author2institution_exploded = df_work2authorships.explode('institutions', ignore_index=True)
+    df_work2institution_exploded = df_work2authorships.explode('institutions', ignore_index=True)
 
     # Normalizar la información de instituciones
-    df_institution_norm = pd.json_normalize(df_author2institution_exploded['institutions'])
+    df_institution_norm = pd.json_normalize(df_work2institution_exploded['institutions'])
     df_institution_norm.drop(columns=['lineage'], errors='ignore', inplace=True)
 
     # Combinar author_id con la información normalizada de instituciones
-    df_author2institution = df_author2institution_exploded[['author_id']].join(df_institution_norm)
+    df_author2institution = df_work2institution_exploded[['author_id']].join(df_institution_norm)
 
-    df_work2author['load_datetime'] = pd.to_datetime(datetime.today())
-    df_author2institution['load_datetime'] = pd.to_datetime(datetime.today())
+    # Combinar work_id con la información normalizada de instituciones
+    df_work2institution = df_work2institution_exploded[['work_id']].join(df_institution_norm)
+    
+    df_work2author['load_datetime'] = date.today()
+    df_work2institution['load_datetime'] = date.today()
+    df_author2institution['load_datetime'] = date.today()
 
-    return df_work2author, df_author2institution
+    return df_work2author, df_work2institution, df_author2institution
 
 def land_openalex_work_concept(df_work_raw):
     df_work = df_work_raw.loc[:,['id','concepts']]
