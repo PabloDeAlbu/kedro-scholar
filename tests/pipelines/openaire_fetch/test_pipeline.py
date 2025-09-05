@@ -1,5 +1,5 @@
 """
-This is a boilerplate test file for pipeline 'openaire_search'
+This is a boilerplate test file for pipeline 'openaire_fetch'
 generated using Kedro 0.19.9.
 Please add your pipeline tests here.
 
