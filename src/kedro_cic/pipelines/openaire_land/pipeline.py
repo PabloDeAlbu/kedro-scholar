@@ -17,11 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             name="openaire_land_researchproduct",
             func=openaire_land_researchproduct,
-            inputs=[
-                "params:openaire_fetch_options.filter_param",
-                "params:openaire_fetch_options.filter_value",
-                "raw/openaire/researchproduct#parquet",
-            ],
+            inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct"
         ),
         node(
