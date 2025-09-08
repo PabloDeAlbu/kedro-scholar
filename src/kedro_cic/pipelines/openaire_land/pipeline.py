@@ -57,7 +57,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs="raw/openaire/researchproduct#parquet",
             outputs=[
                 "ldg/openaire/organization",
-                "ldg/openaire/research_organizations",
+                "ldg/openaire/researchproduct_organizations",
                 "ldg/openaire/organization_pids",
             ]
         ),
