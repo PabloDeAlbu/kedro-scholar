@@ -162,6 +162,34 @@ def openaire_land_researchproduct_instances(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_research_instances, df_research_alternateidentifiers
 
+def openaire_land_researchproduct_organizations(df: pd.DataFrame)-> pd.DataFrame:
+
+    df_research_organization = df[['id','organizations']].explode('organizations').reset_index(drop=True)
+    df_research_organization.rename(columns={'id':'researchproduct_id'}, inplace=True)
+
+    df_organizations = pd.json_normalize(df_research_organization['organizations'])
+    df_organizations.rename(columns={'id':'organization_id'}, inplace=True)
+
+    df_research_organization = pd.concat(
+        [df_research_organization['researchproduct_id'], df_organizations['organization_id']], 
+        axis=1
+    )
+
+    df_organization_pid = df_organizations.loc[:, ['organization_id', 'pids']].copy()
+    df_organizations.drop(columns=['pids'], inplace=True)
+    df_organization_pid.dropna(inplace=True)
+
+    df_organization_pid = df_organization_pid.explode('pids', ignore_index=True)
+    df_organization_pid.loc[:, ['organization_id', 'pids']]
+
+    df_pid = pd.json_normalize(df_organization_pid['pids'])
+    df_pid.rename(columns={'scheme':'pid_scheme','value':'pid_value'}, inplace=True)
+
+    df_organization_pid.drop(columns=['pids'], inplace=True)
+    df_organization_pid = pd.concat([df_organization_pid, df_pid], axis=1)
+
+    return df_organizations, df_research_organization, df_organization_pid
+
 def openaire_land_researchproduct_originalid(df: pd.DataFrame)-> pd.DataFrame:
 
     df_research_originalids = df[['id','originalIds']]
