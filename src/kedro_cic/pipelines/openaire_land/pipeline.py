@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     openaire_land_researchproduct,
     openaire_land_researchproduct_authors,
+    openaire_land_researchproduct_collectedfrom,
     openaire_land_researchproduct_contributors,
     openaire_land_researchproduct_descriptions,
     openaire_land_researchproduct_instances,
@@ -25,6 +26,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=openaire_land_researchproduct_authors,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_authors",
+        ),
+        node(
+            name="openaire_land_researchproduct_collectedfrom",
+            func=openaire_land_researchproduct_collectedfrom,
+            inputs="raw/openaire/researchproduct#parquet",
+            outputs="ldg/openaire/researchproduct_collectedfrom"
         ),
         node(
             name="openaire_land_researchproduct_contributors",

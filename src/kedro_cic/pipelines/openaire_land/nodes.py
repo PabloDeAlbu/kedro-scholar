@@ -119,6 +119,25 @@ def openaire_land_researchproduct_authors(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_research_author
 
+def openaire_land_researchproduct_collectedfrom(df: pd.DataFrame)-> pd.DataFrame:
+
+    load_dt = _pick_load_dt(df)
+
+    df_research_collectedfrom = df[['id','collectedFrom']].explode('collectedFrom').reset_index(drop=True)
+    df_research_collectedfrom.rename(columns={'id':'researchproduct_id'}, inplace=True)
+
+    df_collectedfrom = pd.json_normalize(df_research_collectedfrom['collectedFrom'])
+    df_collectedfrom.rename(columns={'key':'datasource_id'}, inplace=True)
+
+    df_research_collectedfrom = pd.concat(
+        [df_research_collectedfrom['researchproduct_id'], df_collectedfrom.loc[:,['datasource_id','value']]], 
+        axis=1
+    )
+
+    df_research_collectedfrom['load_datetime'] = load_dt
+
+    return df_research_collectedfrom
+
 def openaire_land_researchproduct_contributors(df: pd.DataFrame)-> pd.DataFrame:
 
     load_dt = _pick_load_dt(df)
