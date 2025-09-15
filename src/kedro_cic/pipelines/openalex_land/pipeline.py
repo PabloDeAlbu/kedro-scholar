@@ -1,7 +1,5 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
-    fetch_openalex_author,
-    fetch_openalex_work,
     land_openalex_author,
     land_openalex_author_affiliation,
     land_openalex_author_topic,
@@ -17,24 +15,6 @@ from .nodes import (
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
-        node(
-            name="fetch_openalex_work",
-            func=fetch_openalex_work,
-            inputs=[
-                "params:openalex_fetch_options.institution_ror",
-                "params:fetch_options.env",
-            ],
-            outputs=["raw/openalex/work#parquet","raw/openalex/work_dev#parquet"],
-            ),
-        node(
-            name="fetch_openalex_author",
-            func=fetch_openalex_author,
-            inputs=[
-                "params:openalex_fetch_options.institution_ror",
-                "params:fetch_options.env",
-            ],
-            outputs="raw/openalex/author#parquet",
-            ),
         node(
             name="land_openalex_author",
             func=land_openalex_author,
