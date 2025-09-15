@@ -95,5 +95,5 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs='raw/openalex/work#parquet',
             outputs='ldg/openalex/map_work_location'
             )
-], tags="openalex"
+], tags="openalex_land"
 )
