@@ -4,7 +4,7 @@ from .nodes import (
     openaire_land_researchproduct_authors,
     openaire_land_researchproduct_collectedfrom,
     openaire_land_researchproduct_contributors,
-    openaire_land_researchproduct_descriptions,
+    # openaire_land_researchproduct_descriptions,
     openaire_land_researchproduct_instances,
     openaire_land_researchproduct_organizations,
     openaire_land_researchproduct_originalid,
@@ -39,12 +39,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_contributors"
         ),
-        node(
-            name="openaire_land_researchproduct_descriptions",
-            func=openaire_land_researchproduct_descriptions,
-            inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_descriptions"
-        ),
+        # node(
+        #     name="openaire_land_researchproduct_descriptions",
+        #     func=openaire_land_researchproduct_descriptions,
+        #     inputs="raw/openaire/researchproduct#parquet",
+        #     outputs="ldg/openaire/researchproduct_descriptions"
+        # ),
         node(
             name="openaire_land_researchproduct_instances",
             func=openaire_land_researchproduct_instances,
