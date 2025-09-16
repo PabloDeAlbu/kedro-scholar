@@ -216,6 +216,12 @@ def openaire_land_researchproduct_organizations(df: pd.DataFrame)-> pd.DataFrame
     df_organization_pid.drop(columns=['pids'], inplace=True)
     df_organization_pid = pd.concat([df_organization_pid, df_pid], axis=1)
 
+    df_organizations = (
+        df_organizations
+        .drop_duplicates(subset="organization_id", keep="first")
+        .reset_index(drop=True)
+    )
+    
     df_organizations['load_datetime'] = load_dt
     df_research_organization['load_datetime'] = load_dt
     df_organization_pid['load_datetime'] = load_dt
