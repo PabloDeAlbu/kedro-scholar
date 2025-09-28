@@ -4,7 +4,7 @@ import time
 from datetime import datetime, date
 from pandas import json_normalize
 
-def land_openalex_author(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_land_author(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.drop(
         columns=[
@@ -26,7 +26,7 @@ def land_openalex_author(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author
 
-def land_openalex_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_land_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
 
     # Selecciono columna con id de author y afiliación
     df_author = df.loc[:, ['id', 'affiliations']]
@@ -48,7 +48,7 @@ def land_openalex_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author2affiliation
 
-def land_openalex_author_topic(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_land_author_topic(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.loc[:,['id', 'topics']]
     df_author = df_author.convert_dtypes() 
@@ -71,7 +71,7 @@ def land_openalex_author_topic(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_author2topic
 
-def land_openalex_work(df_work_raw):
+def openalex_land_work(df_work_raw):
     """Limpia y transforma los datos de OpenAlex para su almacenamiento en una base de datos relacional."""
     
     expected_columns = [
@@ -214,7 +214,7 @@ def land_openalex_work(df_work_raw):
 
     return df_work
 
-def land_openalex_work_authorships(df_work_raw):
+def openalex_land_work_authorships(df_work_raw):
 
     # Seleccionar las columnas necesarias y convertir los tipos de datos
     df_work2authorships = df_work_raw[['id', 'authorships']].convert_dtypes()
@@ -252,7 +252,7 @@ def land_openalex_work_authorships(df_work_raw):
 
     return df_work2author, df_work2institution, df_author2institution
 
-def land_openalex_work_concept(df_work_raw):
+def openalex_land_work_concept(df_work_raw):
     df_work = df_work_raw.loc[:,['id','concepts']]
     df_work = df_work.convert_dtypes()
 
@@ -267,7 +267,7 @@ def land_openalex_work_concept(df_work_raw):
 
     return df_work2concepts
 
-def land_openalex_work_corresponding_author_ids(df_work_raw):
+def openalex_land_work_corresponding_author_ids(df_work_raw):
     df_work = df_work_raw.loc[:,['id','corresponding_author_ids']]
     df_work = df_work.convert_dtypes()
 
@@ -277,7 +277,7 @@ def land_openalex_work_corresponding_author_ids(df_work_raw):
 
     return df_work2corresponding_author_ids
 
-def land_openalex_work_referenced_works(df_work_raw):
+def openalex_land_work_referenced_works(df_work_raw):
     df_work = df_work_raw.loc[:,['id','referenced_works']]
     df_work = df_work.convert_dtypes()
     df_work2referenced_works_exploded =  df_work.explode('referenced_works')
@@ -288,7 +288,7 @@ def land_openalex_work_referenced_works(df_work_raw):
     return df_work2referenced_works
 
 
-def land_openalex_work_topics(df_work_raw):
+def openalex_land_work_topics(df_work_raw):
     df_work = df_work_raw.loc[:,['id','topics']]
     df_work = df_work.convert_dtypes()
     
@@ -305,7 +305,7 @@ def land_openalex_work_topics(df_work_raw):
 
     return df_work2topics
 
-def land_openalex_work_location(df_work_raw):
+def openalex_land_work_location(df_work_raw):
 
     df_work_location = df_work_raw.explode('locations').reset_index(drop=True)
 
