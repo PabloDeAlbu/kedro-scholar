@@ -1,0 +1,13 @@
+openalex_extract_options:
+#    REPLACE with institution ror.
+#    institution_ror: 'https://ror.org/01tjs6929' # unlp ror
+    institution_ror: 'https://ror.org/02s7sax82' # cic ror
+
+    author_filter: 'affiliations.institution.ror'
+    author_endpoint: authors
+    institution_filter: 'ror'
+    institution_endpoint: institutions
+    work_filter: 'institutions.ror'
+    work_endpoint: works
+
+    env: dev

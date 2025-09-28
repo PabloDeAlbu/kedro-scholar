@@ -15,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_fetch_options.institution_ror",
                 "params:fetch_options.env",
             ],
-            outputs=["raw/openalex/work#parquet","raw/openalex/work_dev#parquet"],
+            outputs=["raw/openalex_legacy/work#parquet","raw/openalex_legacy/work_dev#parquet"],
             ),
         node(
             name="openalex_fetch_author",
@@ -24,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_fetch_options.institution_ror",
                 "params:fetch_options.env",
             ],
-            outputs="raw/openalex/author#parquet",
+            outputs="raw/openalex_legacy/author#parquet",
             ),
             node(
             name="openalex_fetch_institution",
@@ -34,8 +34,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:fetch_options.env",
             ],
             outputs=[
-                "raw/openalex/institution#parquet",
-                "raw/openalex/institution_dev#parquet"
+                "raw/openalex_legacy/institution#parquet",
+                "raw/openalex_legacy/institution_dev#parquet"
                 ],
             )
     ], tags="openalex_fetch"
