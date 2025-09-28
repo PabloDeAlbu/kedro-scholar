@@ -1,8 +1,0 @@
-# This is a boilerplate parameters config generated for pipeline 'openalex_work'
-# using Kedro 0.19.9.
-#
-# Documentation for this file format can be found in "Parameters"
-# Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
-openalex_fetch_options:
-    # REPLACE with institution ror.
-    institution_ror: 'https://ror.org/01tjs6929' # unlp ror
