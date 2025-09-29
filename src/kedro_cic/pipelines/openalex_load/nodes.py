@@ -315,7 +315,7 @@ def openalex_load_work_location(df_work_raw):
         'id', 
         'source_id', 'source_display_name', 'source_is_core', 'source_type',
         'source_host_organization', 'source_host_organization_name',
-        'is_accepted', 'is_oa', 'is_published', 'loading_page_url',
+        'is_accepted', 'is_oa', 'is_published', 'landing_page_url',
         'license', 'license_id', 'pdf_url', 'version',
         # 'source_host_organization_lineage', 'source_host_organization_lineage_names', 'source_issn',
         'source_is_in_doaj', 'source_is_oa', 'source_issn_l'
