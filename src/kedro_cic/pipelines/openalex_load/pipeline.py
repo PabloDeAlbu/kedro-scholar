@@ -1,0 +1,85 @@
+from kedro.pipeline import Pipeline, node, pipeline
+from .nodes import (
+    openalex_load_author,
+    openalex_load_author_affiliation,
+    openalex_load_author_topic,
+    openalex_load_work,
+    openalex_load_work_authorships,
+    openalex_load_work_concept,
+    openalex_load_work_corresponding_author_ids,
+    openalex_load_work_referenced_works,
+    openalex_load_work_topics,
+    openalex_load_work_location,
+    openalex_load_institution
+)
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return pipeline([
+        node(
+            name="openalex_load_author",
+            func=openalex_load_author,
+            inputs='raw/openalex/author#parquet',
+            outputs='ldg/openalex/author'
+            ),
+        node(
+            name="openalex_load_author_affiliation",
+            func=openalex_load_author_affiliation,
+            inputs='raw/openalex/author#parquet',
+            outputs='ldg/openalex/map_author_affiliation'
+            ),
+        node(
+            name="openalex_load_author_topic",
+            func=openalex_load_author_topic,
+            inputs='raw/openalex/author#parquet',
+            outputs='ldg/openalex/map_author_topic'
+            ),
+        node(
+            name="openalex_load_work",
+            func=openalex_load_work,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/work'
+            ),
+        node(
+            name="openalex_load_work_authorships",
+            func=openalex_load_work_authorships,
+            inputs='raw/openalex/work#parquet',
+            outputs=['ldg/openalex/map_work_author', 'ldg/openalex/map_work_institution', 'ldg/openalex/map_author_institution']
+            ),
+        node(
+            name="openalex_load_work_concept",
+            func=openalex_load_work_concept,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/map_work_concepts'
+            ),
+        node(
+            name="openalex_load_work_corresponding_author_ids",
+            func=openalex_load_work_corresponding_author_ids,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/map_work_corresponding_author_ids'
+            ),
+        node(
+            name="openalex_load_work_referenced_works",
+            func=openalex_load_work_referenced_works,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/map_work_referenced_works'
+            ),
+        node(
+            name="openalex_load_work_topics",
+            func=openalex_load_work_topics,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/map_work_topics'
+            ),
+        node(
+            name="openalex_load_work_location",
+            func=openalex_load_work_location,
+            inputs='raw/openalex/work#parquet',
+            outputs='ldg/openalex/map_work_location'
+            ),
+        node(
+            name="openalex_load_institution",
+            func=openalex_load_institution,
+            inputs='raw/openalex/institution#parquet',
+            outputs='ldg/openalex/institution'
+            ),      
+    ], tags="openalex_load"
+)

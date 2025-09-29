@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime, date
 from pandas import json_normalize
 
-def openalex_land_author(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_load_author(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.drop(
         columns=[
@@ -24,7 +24,7 @@ def openalex_land_author(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author
 
-def openalex_land_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_load_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
 
     # Selecciono columna con id de author y afiliación
     df_author = df.loc[:, ['id', 'affiliations']]
@@ -46,7 +46,7 @@ def openalex_land_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author2affiliation
 
-def openalex_land_author_topic(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_load_author_topic(df: pd.DataFrame)-> pd.DataFrame:
     
     df_author = df.loc[:,['id', 'topics']]
     df_author = df_author.convert_dtypes() 
@@ -69,7 +69,7 @@ def openalex_land_author_topic(df: pd.DataFrame)-> pd.DataFrame:
 
     return df_author2topic
 
-def openalex_land_work(df_work_raw):
+def openalex_load_work(df_work_raw):
     """Limpia y transforma los datos de OpenAlex para su almacenamiento en una base de datos relacional."""
     
     expected_columns = [
@@ -212,7 +212,7 @@ def openalex_land_work(df_work_raw):
 
     return df_work
 
-def openalex_land_work_authorships(df_work_raw):
+def openalex_load_work_authorships(df_work_raw):
 
     # Seleccionar las columnas necesarias y convertir los tipos de datos
     df_work2authorships = df_work_raw[['id', 'authorships']].convert_dtypes()
@@ -250,7 +250,7 @@ def openalex_land_work_authorships(df_work_raw):
 
     return df_work2author, df_work2institution, df_author2institution
 
-def openalex_land_work_concept(df_work_raw):
+def openalex_load_work_concept(df_work_raw):
     df_work = df_work_raw.loc[:,['id','concepts']]
     df_work = df_work.convert_dtypes()
 
@@ -265,7 +265,7 @@ def openalex_land_work_concept(df_work_raw):
 
     return df_work2concepts
 
-def openalex_land_work_corresponding_author_ids(df_work_raw):
+def openalex_load_work_corresponding_author_ids(df_work_raw):
     df_work = df_work_raw.loc[:,['id','corresponding_author_ids']]
     df_work = df_work.convert_dtypes()
 
@@ -275,7 +275,7 @@ def openalex_land_work_corresponding_author_ids(df_work_raw):
 
     return df_work2corresponding_author_ids
 
-def openalex_land_work_referenced_works(df_work_raw):
+def openalex_load_work_referenced_works(df_work_raw):
     df_work = df_work_raw.loc[:,['id','referenced_works']]
     df_work = df_work.convert_dtypes()
     df_work2referenced_works_exploded =  df_work.explode('referenced_works')
@@ -286,7 +286,7 @@ def openalex_land_work_referenced_works(df_work_raw):
     return df_work2referenced_works
 
 
-def openalex_land_work_topics(df_work_raw):
+def openalex_load_work_topics(df_work_raw):
     df_work = df_work_raw.loc[:,['id','topics']]
     df_work = df_work.convert_dtypes()
     
@@ -303,7 +303,7 @@ def openalex_land_work_topics(df_work_raw):
 
     return df_work2topics
 
-def openalex_land_work_location(df_work_raw):
+def openalex_load_work_location(df_work_raw):
 
     df_work_location = df_work_raw.explode('locations').reset_index(drop=True)
 
@@ -315,7 +315,7 @@ def openalex_land_work_location(df_work_raw):
         'id', 
         'source_id', 'source_display_name', 'source_is_core', 'source_type',
         'source_host_organization', 'source_host_organization_name',
-        'is_accepted', 'is_oa', 'is_published', 'landing_page_url',
+        'is_accepted', 'is_oa', 'is_published', 'loading_page_url',
         'license', 'license_id', 'pdf_url', 'version',
         # 'source_host_organization_lineage', 'source_host_organization_lineage_names', 'source_issn',
         'source_is_in_doaj', 'source_is_oa', 'source_issn_l'
@@ -324,3 +324,46 @@ def openalex_land_work_location(df_work_raw):
     df_work_location['load_datetime'] = pd.to_datetime(datetime.today())
 
     return df_work_location
+
+def openalex_load_institution(df_institution_raw):
+
+    expected_columns = [
+        'id',
+        'ror',
+        'display_name',
+        'country_code',
+        'type',
+        'type_id',
+        'lineage',
+        'homepage_url',
+        'image_url',
+        'image_thumbnail_url',
+        'display_name_acronyms',
+        'display_name_alternatives',
+        'repositories',
+        'works_count',
+        'cited_by_count',
+        'summary_stats',
+        'ids',
+        'geo',
+        'international',
+        'associated_institutions',
+        'counts_by_year',
+        'roles',
+        'topics',
+        'topic_share',
+        'x_concepts',
+        'is_super_system',
+        'works_api_url',
+        'updated_date',
+        'created_date',
+        'extract_datetime'
+    ]
+    df_institution = df_institution_raw.loc[:,expected_columns].reset_index(drop=True).copy()
+
+    df_institution['load_datetime'] = pd.to_datetime(datetime.today())
+
+    # Convertir tipos de datos automáticamente
+    df_institution = df_institution.astype(str)
+
+    return df_institution
