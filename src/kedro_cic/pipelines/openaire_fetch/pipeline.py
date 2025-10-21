@@ -16,8 +16,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:fetch_options.env",
             ],
             outputs=[
-                "raw/openaire/researchproduct#parquet",
-                "raw/openaire/researchproduct_dev#parquet",
+                "raw/openaire_old/researchproduct#parquet",
+                "raw/openaire_old/researchproduct_dev#parquet",
                 ],
         )
     ],

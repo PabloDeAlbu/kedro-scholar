@@ -1,0 +1,25 @@
+openaire_extract_options:
+
+    access_token: REPLACE_ME
+    refresh_token: REPLACE_ME
+
+    filter_param: relOrganizationId
+    organization_filter_value: openorgs____::40b9f835648a3e0d057d6917dd7e54d5     ## unlp organization id    
+    ror_filter_value: https://ror.org/01tjs6929     ## unlp ror    
+
+#    filter_param: relCollectedFromDatasourceId
+ #   filter_value: opendoar____::01e9565cecc4e989123f9620c1d09c09     ## sedici datasource_id
+
+    organizations_endpoint: organizations
+    organizations_filter: 'pid'
+    
+    researchproducts_endpoint: researchProducts
+    researchproducts_filter: 'relOrganizationId'
+
+    datasources_endpoint: dataSources
+    datasources_filter: 'relOrganizationId'
+
+    projects_endpoint: projects
+    projects_filter: 'relOrganizationId'
+
+    env: dev
