@@ -5,5 +5,5 @@
 # Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
 oai_fetch_options:
     # Replace with OAI URL endpoint
-    base_url: 'REPLACE_ME'
-    context: 'snrd'
+    base_url: 'https://ri.conicet.gov.ar/oai/'
+    context: 'request'

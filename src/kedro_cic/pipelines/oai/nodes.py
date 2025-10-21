@@ -7,7 +7,15 @@ from datetime import date
 def get_oai_records(base_url):
     start_time = time.time()
 
-    response = requests.get(base_url)
+    try:
+        response = requests.get(base_url)
+    except requests.RequestException as exc:
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        delay = max(2 * elapsed_time, 1.0)
+        print(f"Request error for {base_url}: {exc}. Sleeping for {delay:.2f} seconds before giving up.")
+        time.sleep(delay)
+        return None
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -16,11 +24,9 @@ def get_oai_records(base_url):
     print(f"Sleeping for {delay:.2f} seconds")
     time.sleep(delay)
 
-    if response.status_code == 200:
-        return response
-    else:
+    if response.status_code != 200:
         print(f"Error: {response.status_code}")
-        return None
+    return response
 
 def parse_oai_response(xml_data):
     root = ET.fromstring(xml_data)
@@ -40,7 +46,12 @@ def parse_oai_response(xml_data):
                     record_dict[tag] = [elem.text]
             records.append(record_dict)
 
-    return records
+    token_element = root.find('.//oai:resumptionToken', namespaces)
+    resumption_token = None
+    if token_element is not None and token_element.text:
+        resumption_token = token_element.text.strip() or None
+
+    return records, resumption_token
 
 
 # Helper to safely get nth element from lists or tuples
@@ -61,35 +72,49 @@ def explode_column(df_raw, col, new_col_name):
     return df
 
 def fetch_oai_items(base_url, context, env):
-    
-    resumption_token = '0'
-    params = f'/{context}?verb=ListRecords&resumptionToken=oai_dc////'
-    url = base_url + params + str(resumption_token)
-    items = []
-    resumption_token = 0
-    url = base_url + params + str(resumption_token)
+    base = base_url.rstrip('/')
+    ctx = context.lstrip('/')
+    metadata_format = 'oai_dc'
+    max_retries = 10
 
-    response = get_oai_records(url)
-    records = parse_oai_response(response.text)
-    record_size = len(records) 
-    items.extend(records)
+    def build_url(token=None):
+        if token:
+            return f"{base}/{ctx}?verb=ListRecords&resumptionToken={token}"
+        return f"{base}/{ctx}?verb=ListRecords&metadataPrefix={metadata_format}"
+
+    resumption_token = None
+    url = build_url()
+    items = []
 
     iteration_limit = 2
     iteration_count = 0
 
-    while record_size > 0:
+    while url:
+        response = None
+        for attempt in range(1, max_retries + 1):
+            response = get_oai_records(url)
+            if response and response.ok:
+                break
+            status = response.status_code if response else "No response"
+            print(f"Request failed ({status}) for {url} (attempt {attempt}/{max_retries})")
+            if attempt == max_retries:
+                print("Max retries reached. Stopping pagination.")
+                return pd.DataFrame(items)
+            time.sleep(attempt)
+
+        records, resumption_token = parse_oai_response(response.text)
+        items.extend(records)
 
         if env == 'dev' and iteration_count >= iteration_limit:
             break
 
-        record_size = len(records)
-        resumption_token += 100
-        url = base_url + params + str(resumption_token)
-        print(url)
-        response = get_oai_records(url)
-        records = parse_oai_response(response.text)
-        items.extend(records)
         iteration_count += 1
+
+        if not resumption_token:
+            break
+
+        url = build_url(resumption_token)
+        print(url)
 
     df = pd.DataFrame(items)
     return df
