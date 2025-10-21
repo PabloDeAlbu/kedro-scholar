@@ -44,6 +44,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "raw/openalex/institution#parquet",
                 "raw/openalex/institution_dev#parquet"
                 ],
+            ),
+        node(
+            name="openalex_extract_funder",
+            func=openalex_extract,
+            inputs=[
+                "params:openalex_extract_options.institution_ror",
+                "params:openalex_extract_options.funder_filter",
+                "params:openalex_extract_options.funder_endpoint",
+                "params:openalex_extract_options.env",
+            ],
+            outputs=[
+                "raw/openalex/funder#parquet",
+                "raw/openalex/funder_dev#parquet"
+                ],
             )
     ], tags="openalex_extract"
 )
