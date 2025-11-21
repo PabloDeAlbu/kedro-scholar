@@ -19,39 +19,39 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="openaire_land_researchproduct",
             func=openaire_land_researchproduct,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct"
+            outputs="ldg/openaire/researchproduct_legacy"
         ),
         node(
             name="openaire_land_researchproduct_authors",
             func=openaire_land_researchproduct_authors,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_authors",
+            outputs="ldg/openaire/researchproduct_legacy_authors",
         ),
         node(
             name="openaire_land_researchproduct_collectedfrom",
             func=openaire_land_researchproduct_collectedfrom,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_collectedfrom"
+            outputs="ldg/openaire/researchproduct_legacy_collectedfrom"
         ),
         node(
             name="openaire_land_researchproduct_contributors",
             func=openaire_land_researchproduct_contributors,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_contributors"
+            outputs="ldg/openaire/researchproduct_legacy_contributors"
         ),
         # node(
         #     name="openaire_land_researchproduct_descriptions",
         #     func=openaire_land_researchproduct_descriptions,
         #     inputs="raw/openaire/researchproduct#parquet",
-        #     outputs="ldg/openaire/researchproduct_descriptions"
+        #     outputs="ldg/openaire/researchproduct_legacy_descriptions"
         # ),
         node(
             name="openaire_land_researchproduct_instances",
             func=openaire_land_researchproduct_instances,
             inputs="raw/openaire/researchproduct#parquet",
             outputs=[
-                "ldg/openaire/researchproduct_instances",
-                "ldg/openaire/researchproduct_alternateidentifiers",
+                "ldg/openaire/researchproduct_legacy_instances",
+                "ldg/openaire/researchproduct_legacy_alternateidentifiers",
             ]
         ),
         node(
@@ -59,34 +59,34 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=openaire_land_researchproduct_organizations,
             inputs="raw/openaire/researchproduct#parquet",
             outputs=[
-                "ldg/openaire/organization",
-                "ldg/openaire/researchproduct_organizations",
-                "ldg/openaire/organization_pids",
+                "ldg/openaire/organization_legacy",
+                "ldg/openaire/researchproduct_legacy_organizations",
+                "ldg/openaire/organization_legacy_pids",
             ]
         ),
         node(
             name="openaire_land_researchproduct_originalid",
             func=openaire_land_researchproduct_originalid,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_originalid"
+            outputs="ldg/openaire/researchproduct_legacy_originalid"
         ),
         node(
             name="openaire_land_researchproduct_pids",
             func=openaire_land_researchproduct_pids,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_pids"
+            outputs="ldg/openaire/researchproduct_legacy_pids"
         ),
         node(
             name="openaire_land_researchproduct_sources",
             func=openaire_land_researchproduct_sources,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_sources"
+            outputs="ldg/openaire/researchproduct_legacy_sources"
         ),
         node(
             name="openaire_land_researchproduct_subjects",
             func=openaire_land_researchproduct_subjects,
             inputs="raw/openaire/researchproduct#parquet",
-            outputs="ldg/openaire/researchproduct_subjects"
+            outputs="ldg/openaire/researchproduct_legacy_subjects"
         ),
     ], tags="openaire_land"
 )
