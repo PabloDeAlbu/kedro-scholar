@@ -1,3 +1,4 @@
+
 from datetime import date
 import pandas as pd
 import requests
@@ -12,9 +13,10 @@ def refresh_access_token(refresh_token):
     else:
         raise Exception(f"Failed to refresh token: {response.status_code}")
 
-def openaire_extract_researchproduct(filter_param, filter_value, access_token, refresh_token, env):
+def openaire_extract_researchproduct(filter_param, ror_filter_value, access_token, refresh_token, env):
     cursor = '*'
-    base_url = 'https://api.openaire.eu/graph/v2/researchProducts'
+    organizations_base_url = 'https://api.openaire.eu/graph/v1/organizations'
+    research_base_url = 'https://api.openaire.eu/graph/v2/researchProducts'
     iteration_limit = 5
     iteration_count = 0
     page_size = 50         # Ajustar según sea necesario
@@ -28,14 +30,52 @@ def openaire_extract_researchproduct(filter_param, filter_value, access_token, r
         "Authorization": f"Bearer {access_token}"
     }
 
+    org_query_params = {
+        "pid": ror_filter_value,
+    }
+
+    # Resolver el id de OpenAIRE a partir del ROR
+    while True:
+        response = requests.get(organizations_base_url, headers=request_headers, params=org_query_params)
+
+        if response.status_code == 403:
+            if refresh_attempts >= max_refresh_attempts:
+                raise Exception("Máximo de intentos para refrescar el token alcanzado. Abortando.")
+            print("Access token expired or invalid while fetching organization. Refreshing token...")
+            new_token = refresh_access_token(refresh_token)
+            if not new_token:
+                raise Exception("No se pudo refrescar el access token para organizations.")
+            access_token = new_token
+            request_headers["Authorization"] = f"Bearer {access_token}"
+            refresh_attempts += 1
+            continue
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch organization for ROR {ror_filter_value}: {response.status_code}")
+
+        data = response.json()
+        results = data.get("results", [])
+        if not results:
+            raise Exception(f"No organization found for ROR {ror_filter_value}")
+
+        organization_id = results[0].get('id')
+        if not organization_id:
+            raise Exception("No se encontró id de organización en la respuesta.")
+
+        print(f"OpenAIRE organization id resolved from ROR {ror_filter_value}: {organization_id}")
+        break
+
+    # Reiniciamos contador de refrescos antes de ir al endpoint de research products
+    refresh_attempts = 0
+
     query_params = {
-        filter_param: filter_value,
+        filter_param: organization_id,
         "pageSize": page_size,
         "cursor": cursor
     }
 
     while True:
-        response = requests.get(base_url, headers=request_headers, params=query_params)
+        response = requests.get(research_base_url, headers=request_headers, params=query_params)
 
         # Si el token es inválido o expiró, intentar renovarlo
         if response.status_code == 403:
@@ -80,7 +120,7 @@ def openaire_extract_researchproduct(filter_param, filter_value, access_token, r
             # Reintentos en caso de error 429
             retries = 0
             while retries < max_retries:
-                response = requests.get(base_url, headers=request_headers, params=query_params)
+                response = requests.get(research_base_url, headers=request_headers, params=query_params)
 
                 if response.status_code == 403:
                     if refresh_attempts >= max_refresh_attempts:
@@ -121,9 +161,8 @@ def openaire_extract_researchproduct(filter_param, filter_value, access_token, r
             cursor = api_response["header"].get("nextCursor", None)
             query_params["cursor"] = cursor
 
-        df[filter_param] = filter_value
+        df[filter_param] = organization_id
 
         df['load_datetime'] = date.today()
 
         return df, df.head(1000)
-

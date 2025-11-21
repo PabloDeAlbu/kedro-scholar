@@ -10,7 +10,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=openaire_extract_researchproduct,
             inputs=[
                 "params:openaire_extract_options.filter_param",
-                "params:openaire_extract_options.filter_value",
+                "params:openaire_extract_options.ror_filter_value",
                 "params:openaire_extract_options.access_token",
                 "params:openaire_extract_options.refresh_token",
                 "params:fetch_options.env",
