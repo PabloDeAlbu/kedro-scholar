@@ -14,5 +14,3 @@ openalex_extract_options:
 
     work_endpoint: works
     work_filter: 'institutions.ror'
-
-    env: dev

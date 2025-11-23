@@ -1,5 +1,7 @@
+from functools import partial
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
+    clean_openalex_institution,
     openalex_extract,
 )
 
@@ -13,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_extract_options.institution_ror",
                 "params:openalex_extract_options.work_filter",
                 "params:openalex_extract_options.work_endpoint",
-                "params:openalex_extract_options.env",
+                "params:extract_options.env",
             ],
             outputs=["raw/openalex/work#parquet","raw/openalex/work_dev#parquet"],
         ),
@@ -24,7 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_extract_options.institution_ror",
                 "params:openalex_extract_options.author_filter",
                 "params:openalex_extract_options.author_endpoint",
-                "params:openalex_extract_options.env",
+                "params:extract_options.env",
             ],
             outputs=[
                 "raw/openalex/author#parquet",
@@ -33,12 +35,12 @@ def create_pipeline(**kwargs) -> Pipeline:
         ),
         node(
             name="openalex_extract_institution",
-            func=openalex_extract,
+            func=partial(openalex_extract, cleaner=clean_openalex_institution),
             inputs=[
                 "params:openalex_extract_options.institution_ror",
                 "params:openalex_extract_options.institution_filter",
                 "params:openalex_extract_options.institution_endpoint",
-                "params:openalex_extract_options.env",
+                "params:extract_options.env",
             ],
             outputs=[
                 "raw/openalex/institution#parquet",
@@ -52,7 +54,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openalex_extract_options.institution_ror",
                 "params:openalex_extract_options.funder_filter",
                 "params:openalex_extract_options.funder_endpoint",
-                "params:openalex_extract_options.env",
+                "params:extract_options.env",
             ],
             outputs=[
                 "raw/openalex/funder#parquet",

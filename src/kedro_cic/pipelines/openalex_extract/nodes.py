@@ -1,7 +1,18 @@
 from datetime import date
+import json
 import requests
 import pandas as pd
 import time
+
+
+def clean_openalex_institution(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza el campo "international" para evitar fallos al escribir Parquet."""
+    df = df.copy()
+    if "international" in df.columns:
+        df["international"] = df["international"].apply(
+            lambda x: None if not x else json.dumps(x, ensure_ascii=False)
+        )
+    return df
 
 def openalex_extract(institution_ror: str, filter_field: str, entity: str = 'institutions', env: str = 'dev', cleaner=None):
     """
@@ -21,7 +32,7 @@ def openalex_extract(institution_ror: str, filter_field: str, entity: str = 'ins
     session = requests.Session()
     base_url = f"https://api.openalex.org/{entity}?filter={filter_field}:{{}}&cursor={{}}&per-page=200"
     cursor = '*'
-    iteration_limit = 5
+    iteration_limit = 1
     iteration_count = 0
     all_dataframes = []
 
