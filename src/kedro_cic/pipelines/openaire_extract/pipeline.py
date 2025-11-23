@@ -13,7 +13,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openaire_extract_options.ror_filter_value",
                 "params:openaire_extract_options.access_token",
                 "params:openaire_extract_options.refresh_token",
-                "params:fetch_options.env",
+                "params:extract_options.env",
             ],
             outputs=[
                 "raw/openaire/researchproduct#parquet",
