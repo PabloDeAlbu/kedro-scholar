@@ -3,5 +3,5 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.1/configuration/parameters.html
-fetch_options:
+extract_options:
     env: dev
