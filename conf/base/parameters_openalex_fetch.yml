@@ -1,4 +1,0 @@
-openalex_fetch_options:
-    # REPLACE with institution ror.
-#    institution_ror: 'https://ror.org/01tjs6929' # unlp ror
-    institution_ror: 'https://ror.org/02s7sax82' # cic ror
