@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     openalex_load_author,
-    openalex_load_author_affiliation,
+    openalex_load_author_institution_year,
     openalex_load_author_topic,
     openalex_load_work,
     openalex_load_work_authorships,
@@ -22,10 +22,10 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs='ldg/openalex/author'
             ),
         node(
-            name="openalex_load_author_affiliation",
-            func=openalex_load_author_affiliation,
+            name="openalex_load_author_institution_year",
+            func=openalex_load_author_institution_year,
             inputs='raw/openalex/author#parquet',
-            outputs='ldg/openalex/map_author_affiliation'
+            outputs='ldg/openalex/author_institution_year'
             ),
         node(
             name="openalex_load_author_topic",

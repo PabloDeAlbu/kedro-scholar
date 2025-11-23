@@ -24,7 +24,7 @@ def openalex_load_author(df: pd.DataFrame)-> pd.DataFrame:
     
     return df_author
 
-def openalex_load_author_affiliation(df: pd.DataFrame)-> pd.DataFrame:
+def openalex_load_author_institution_year(df: pd.DataFrame)-> pd.DataFrame:
 
     # Selecciono columna con id de author y afiliación
     df_author = df.loc[:, ['id', 'affiliations']]
@@ -123,10 +123,11 @@ def openalex_load_work(df_work_raw):
         'cited_by_api_url',
         # 'counts_by_year',
         'updated_date',
-        'created_date'
+        'created_date',
+        'extract_datetime'
     ]
 
-    df_work = df_work_raw.loc[:,expected_columns].reset_index(drop=True).copy()
+    df_work = df_work_raw.reindex(columns=expected_columns).reset_index(drop=True).copy()
 
     # Agregar columnas faltantes con NaN
     for col in expected_columns:
@@ -305,14 +306,15 @@ def openalex_load_work_topics(df_work_raw):
 
 def openalex_load_work_location(df_work_raw):
 
+    df_work_raw.rename(columns={'id':'work_id'}, inplace=True)
     df_work_location = df_work_raw.explode('locations').reset_index(drop=True)
 
-    df_work_location = pd.concat([df_work_location['id'], json_normalize(df_work_location['locations'])], axis=1)
+    df_work_location = pd.concat([df_work_location['work_id'], json_normalize(df_work_location['locations'])], axis=1)
 
     df_work_location.columns = df_work_location.columns.str.replace('.', '_')
 
     df_work_location = df_work_location[[
-        'id', 
+        'work_id','id', 
         'source_id', 'source_display_name', 'source_is_core', 'source_type',
         'source_host_organization', 'source_host_organization_name',
         'is_accepted', 'is_oa', 'is_published', 'landing_page_url',
@@ -321,7 +323,7 @@ def openalex_load_work_location(df_work_raw):
         'source_is_in_doaj', 'source_is_oa', 'source_issn_l'
     ]]
 
-    df_work_location['load_datetime'] = pd.to_datetime(datetime.today())
+    df_work_location['load_datetime'] = date.today()
 
     return df_work_location
 
@@ -352,7 +354,6 @@ def openalex_load_institution(df_institution_raw):
         'roles',
         'topics',
         'topic_share',
-        'x_concepts',
         'is_super_system',
         'works_api_url',
         'updated_date',
