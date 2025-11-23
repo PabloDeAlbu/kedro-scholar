@@ -77,3 +77,10 @@
   load_args:
     schema: "dm_{source}"
   credentials: dw
+
+"dv_{source}/{dataset}":
+  type: pandas.SQLTableDataset
+  table_name: "{dataset}"
+  load_args:
+    schema: "dv_{source}"
+  credentials: dw
