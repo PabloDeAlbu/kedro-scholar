@@ -10,11 +10,11 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="oai_extract_sets",
             func=oai_extract_sets,
             inputs=[
-                "params:oai_extract_options.base_url",
-                "params:oai_extract_options.context",
+                "params:oai_extract_set_options.base_url",
+                "params:oai_extract_set_options.context",
                 "params:extract_options.env",
             ],
-            outputs="raw/oai/set#csv"
+            outputs="ldg/oai/set"
         ),
     ], tags="oai_extract"
 

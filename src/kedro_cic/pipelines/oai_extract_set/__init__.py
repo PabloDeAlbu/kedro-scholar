@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'oai_load'
+This is a boilerplate pipeline 'oai_extract_set'
 generated using Kedro 0.19.9
 """
 

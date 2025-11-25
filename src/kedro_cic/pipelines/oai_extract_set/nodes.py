@@ -75,4 +75,10 @@ def oai_extract_sets(base_url, context, env, verify=None):
         iteration_count += 1
 
     df_sets = pd.DataFrame(all_sets)
+
+    current_time = pd.Timestamp.now(tz="UTC").normalize()
+
+    df_sets['extract_datetime'] = current_time
+    df_sets['load_datetime'] = current_time
+
     return df_sets
