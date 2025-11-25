@@ -5,7 +5,8 @@ from .nodes import (
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([        node(
+    return pipeline([
+        node(
             name="oai_load_item",
             func=oai_load_item,
             inputs=[
@@ -23,5 +24,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/oai/item_rights",
             ],
         ),
-    ], tags="oai_load_item"
+    ], tags="oai_load"
 )
