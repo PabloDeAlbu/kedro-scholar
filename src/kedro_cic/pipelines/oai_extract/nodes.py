@@ -6,7 +6,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 
 
-def get_oai_records(base_url, verify=None, max_retries=3, backoff_factor=1.0):
+def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0):
 
     # Usa el bundle de certifi para evitar errores de certificado en requests
     os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
@@ -43,9 +43,71 @@ def get_oai_records(base_url, verify=None, max_retries=3, backoff_factor=1.0):
             time.sleep(backoff)
     return None
 
-def oai_extract_identifiers(base_url: str, context: str, df_set: pd.DataFrame, env: str, verify=None) -> pd.DataFrame:
-    
-    return None, None
+def oai_extract_identifiers(base_url: str, context: str, env: str, df_set: pd.DataFrame, verify=None) -> pd.DataFrame:
+    records = []
+    iteration_limit = 2 if env == "dev" else None
+
+    col_ids = df_set.head(iteration_limit).iloc[:, 0].tolist()
+
+    if not col_ids:
+        print("No se encontraron colecciones pendientes con processed=False.")
+
+    for set_id in col_ids:
+        resumption_token = 0
+        iteration_count = 0
+
+
+        while True:
+            if env == 'dev' and iteration_limit is not None and iteration_count >= iteration_limit:
+                break
+
+            params = f'/{context}?verb=ListIdentifiers&resumptionToken=oai_dc///{set_id}/{resumption_token}'
+            url = base_url + params
+
+            print(f"Consultando: {url}")
+
+            response = get_oai_response(url, verify=verify)
+
+            resumption_token += 100
+            iteration_count += 1
+
+            if not response or not response.ok:
+                print(f"Error al consultar: {url}")
+                break
+
+            xml_content = response.text
+
+            root = ET.fromstring(xml_content)
+            ns = {
+                'oai': 'http://www.openarchives.org/OAI/2.0/',
+                'dc': 'http://purl.org/dc/elements/1.1/'
+            }
+        
+            record_nodes = root.findall('.//oai:header', ns)
+
+
+            if not record_nodes:
+                print("No se encontraron más registros.")
+                break
+
+            for record in record_nodes:
+                
+                # Valores simples
+                record_id = record.find('.//oai:identifier', ns)
+                record_datestamp = record.find('.//oai:datestamp', ns)
+                
+                # Multivaluados
+                setspec = [e.text for e in record.findall('.//oai:setSpec', ns)]
+
+                records.append({
+                    'record_id': record_id.text if record_id is not None else None,
+                    'datestamp': record_datestamp.text if record_datestamp is not None else None,
+                    'set_id': setspec,
+                })
+
+    df = pd.DataFrame(records)
+
+    return df, df.head(100)
 
 def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: str, verify=None) -> pd.DataFrame:
     records = []
@@ -63,7 +125,7 @@ def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: 
         iteration_count = 0
 
         while True:
-            if env == 'dev' and iteration_count >= iteration_limit:
+            if env == 'dev' and iteration_limit is not None and iteration_count >= iteration_limit:
                 break
 
             params = f'/{context}?verb=ListRecords&resumptionToken=oai_dc///{set_id}/{resumption_token}'
@@ -71,7 +133,7 @@ def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: 
 
             print(f"Consultando: {url}")
 
-            response = get_oai_records(url, verify=verify)
+            response = get_oai_response(url, verify=verify)
 
             resumption_token += 100
             iteration_count += 1
@@ -134,22 +196,22 @@ def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: 
 
     timestamp = pd.Timestamp.now(tz="UTC").normalize()
     df['extract_datetime'] = timestamp
-    df['load_datetime'] = timestamp
 
     return df, df.head(100)
 
+def oai_extract_sets(base_url, context, env, verify=None, iteration_limit=None):
 
-def oai_extract_sets(base_url, context, env, verify=None):
+    if iteration_limit is None and env == "dev":
+        iteration_limit = 2
 
     resumption_token = 0
     all_sets = []
 
-    iteration_limit = 2
     iteration_count = 0
 
     while True:
 
-        if env == 'dev' and iteration_count >= iteration_limit:
+        if iteration_limit is not None and iteration_count >= iteration_limit:
             break
 
         params = f'/{context}?verb=ListSets&resumptionToken=////{resumption_token}'
@@ -157,7 +219,7 @@ def oai_extract_sets(base_url, context, env, verify=None):
 
         print(f"Consultando: {url}")
 
-        response = get_oai_records(url, verify=verify)
+        response = get_oai_response(url, verify=verify)
         if not response:
             break
 
@@ -181,9 +243,24 @@ def oai_extract_sets(base_url, context, env, verify=None):
 
     df_sets = pd.DataFrame(all_sets)
 
-    current_time = pd.Timestamp.now(tz="UTC").normalize()
-
-    df_sets['extract_datetime'] = current_time
-    df_sets['load_datetime'] = current_time
+    timestamp = pd.Timestamp.now(tz="UTC").normalize()
+    df_sets['extract_datetime'] = timestamp
 
     return df_sets
+
+def oai_intermediate_sets(df_sets):
+    
+    df_sets["col_set"] = df_sets["setSpec"].str.startswith("col_")
+    df_sets["com_set"] = df_sets["setSpec"].str.startswith("com_")
+
+    return df_sets
+
+def oai_filter_col(df_sets, env):
+    
+    col_filter = df_sets['col_set'] == True
+    df_col = df_sets[col_filter]#.loc[:, "setSpec"]
+
+    if env == "dev":
+        df_col = df_col.head(2)
+    
+    return df_col
