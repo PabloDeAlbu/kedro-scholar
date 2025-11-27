@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'oai_extract_item_by_col'
+This is a boilerplate pipeline 'oai_extract'
 generated using Kedro 0.19.9
 """
 

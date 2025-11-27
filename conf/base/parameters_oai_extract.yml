@@ -3,8 +3,9 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.9/configuration/parameters.html
-oai_extract_item_by_col_options:
+oai_extract_options:
     # Replace with OAI URL endpoint
     base_url: 'https://ri.conicet.gov.ar/oai/'
     context: 'request'
-    col_iteration_limit: 5
+
+    env: dev
