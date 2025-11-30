@@ -43,48 +43,38 @@ def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0):
             time.sleep(backoff)
     return None
 
-def oai_extract_identifiers(base_url: str, context: str, env: str, df_set: pd.DataFrame, verify=None) -> pd.DataFrame:
+def oai_extract_identifiers_by_sets(base_url: str, context: str, env: str, df_set: pd.DataFrame, iteration_limit = 1, verify=None) -> pd.DataFrame:
     records = []
-    iteration_limit = 2 if env == "dev" else None
+    if env == "dev": iteration_limit = 2 
 
-    col_ids = df_set.head(iteration_limit).iloc[:, 0].tolist()
-
-    if not col_ids:
-        print("No se encontraron colecciones pendientes con processed=False.")
+    col_ids = df_set.loc[:, "setSpec"].tolist()
 
     for set_id in col_ids:
-        resumption_token = 0
         iteration_count = 0
-
+        resumption_token = f'oai_dc///{set_id}/0'
 
         while True:
-            if env == 'dev' and iteration_limit is not None and iteration_count >= iteration_limit:
+            if iteration_count >= iteration_limit:
                 break
 
-            params = f'/{context}?verb=ListIdentifiers&resumptionToken=oai_dc///{set_id}/{resumption_token}'
+            params = f'/{context}?verb=ListIdentifiers&resumptionToken={resumption_token}'
             url = base_url + params
 
             print(f"Consultando: {url}")
 
             response = get_oai_response(url, verify=verify)
-
-            resumption_token += 100
-            iteration_count += 1
-
             if not response or not response.ok:
                 print(f"Error al consultar: {url}")
                 break
+            
+            iteration_count += 1
 
             xml_content = response.text
 
             root = ET.fromstring(xml_content)
-            ns = {
-                'oai': 'http://www.openarchives.org/OAI/2.0/',
-                'dc': 'http://purl.org/dc/elements/1.1/'
-            }
+            ns = { 'oai': 'http://www.openarchives.org/OAI/2.0/' }
         
             record_nodes = root.findall('.//oai:header', ns)
-
 
             if not record_nodes:
                 print("No se encontraron más registros.")
@@ -105,9 +95,23 @@ def oai_extract_identifiers(base_url: str, context: str, env: str, df_set: pd.Da
                     'set_id': setspec,
                 })
 
+            token_elem = root.find('.//oai:resumptionToken', ns)
+            if token_elem is not None:
+                complete_list_size = int(token_elem.get('completeListSize'))
+                resumption_token = token_elem.text
+
+            # guarda el tamaño en el df de sets
+            df_set.loc[df_set["setSpec"] == set_id, "completeListSize"] = (
+                int(complete_list_size) if complete_list_size is not None else None
+            )
+          
     df = pd.DataFrame(records)
 
-    return df, df.head(100)
+    timestamp = pd.Timestamp.now(tz="UTC").normalize()
+    df['extract_datetime'] = timestamp
+
+    return df, df_set, df.head(100)
+
 
 def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: str, verify=None) -> pd.DataFrame:
     records = []
@@ -250,14 +254,14 @@ def oai_extract_sets(base_url, context, env, verify=None, iteration_limit=None):
 
 def oai_intermediate_sets(df_sets):
     
-    df_sets["col_set"] = df_sets["setSpec"].str.startswith("col_")
-    df_sets["com_set"] = df_sets["setSpec"].str.startswith("com_")
+    df_sets["is_col_set"] = df_sets["setSpec"].str.startswith("col_")
+    df_sets["is_com_set"] = df_sets["setSpec"].str.startswith("com_")
 
     return df_sets
 
 def oai_filter_col(df_sets, env):
     
-    col_filter = df_sets['col_set'] == True
+    col_filter = df_sets["is_col_set"] == True
     df_col = df_sets[col_filter]#.loc[:, "setSpec"]
 
     if env == "dev":

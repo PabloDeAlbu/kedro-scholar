@@ -7,5 +7,6 @@ oai_extract_options:
     # Replace with OAI URL endpoint
     base_url: 'https://ri.conicet.gov.ar/oai/'
     context: 'request'
+    iteration_limit: 1
 
     env: dev

@@ -37,14 +37,28 @@
   filepath: "data/02_intermediate/{source}/{entity}.csv"
   metadata:
     kedro-viz:
-      layer: raw
+      layer: intermediate
 
 "intermediate/{source}/{entity}#parquet":
   type: pandas.ParquetDataset
   filepath: "data/02_intermediate/{source}/{entity}.parquet"
   metadata:
     kedro-viz:
-      layer: raw
+      layer: intermediate
+
+"primary/{source}/{entity}":
+  type: pandas.CSVDataset
+  filepath: "data/03_primary/{source}/{entity}.csv"
+  metadata:
+    kedro-viz:
+      layer: primary
+
+"primary/{source}/{entity}#parquet":
+  type: pandas.ParquetDataset
+  filepath: "data/03_primary/{source}/{entity}.parquet"
+  metadata:
+    kedro-viz:
+      layer: primary
 
 # landing
 "ldg/{source}/{tablename}":
