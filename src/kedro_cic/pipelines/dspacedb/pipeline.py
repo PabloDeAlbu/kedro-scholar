@@ -4,13 +4,13 @@ generated using Kedro 0.19.8
 """
 
 
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 from .nodes import fetch_dspacedb, land_dspacedb
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([
-        node(
+    return Pipeline([
+        Node(
             name="fetch_dspacedb",
             func=fetch_dspacedb,
             inputs=[
@@ -56,7 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "raw/public/metadatavalue#parquet",
             ]
         ),
-        node(
+        Node(
             name="land_dspacedb",
             func=land_dspacedb,
             inputs=[
@@ -102,5 +102,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/dspacedb/metadatavalue",
             ]
         )
-    ], tags="dspacedb"
-)
+    ], tags="dspacedb")

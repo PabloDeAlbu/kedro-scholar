@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 from .nodes import (
     openaire_load_researchproduct,
     openaire_load_researchproduct_authors,
@@ -14,26 +14,26 @@ from .nodes import (
 )
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([
-        node(
+    return Pipeline([
+        Node(
             name="openaire_load_researchproduct",
             func=openaire_load_researchproduct,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct"
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_authors",
             func=openaire_load_researchproduct_authors,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_authors",
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_collectedfrom",
             func=openaire_load_researchproduct_collectedfrom,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_collectedfrom"
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_contributors",
             func=openaire_load_researchproduct_contributors,
             inputs="raw/openaire/researchproduct#parquet",
@@ -45,7 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         #     inputs="raw/openaire/researchproduct#parquet",
         #     outputs="ldg/openaire/researchproduct_descriptions"
         # ),
-        node(
+        Node(
             name="openaire_load_researchproduct_instances",
             func=openaire_load_researchproduct_instances,
             inputs="raw/openaire/researchproduct#parquet",
@@ -54,7 +54,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/openaire/researchproduct_alternateidentifiers",
             ]
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_organizations",
             func=openaire_load_researchproduct_organizations,
             inputs="raw/openaire/researchproduct#parquet",
@@ -64,29 +64,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/openaire/organization_pids",
             ]
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_originalid",
             func=openaire_load_researchproduct_originalid,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_originalid"
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_pids",
             func=openaire_load_researchproduct_pids,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_pids"
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_sources",
             func=openaire_load_researchproduct_sources,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_sources"
         ),
-        node(
+        Node(
             name="openaire_load_researchproduct_subjects",
             func=openaire_load_researchproduct_subjects,
             inputs="raw/openaire/researchproduct#parquet",
             outputs="ldg/openaire/researchproduct_subjects"
         ),
-    ], tags="openaire_load"
-)
+    ], tags="openaire_load")

@@ -1,4 +1,8 @@
-kedro==0.19.9
-kedro-datasets==5.1.0
-kedro-telemetry==0.6.1
-kedro-viz==10.0.0
+kedro==1.1.1
+kedro-datasets==9.0.0
+kedro-telemetry==0.6.5
+kedro-viz==12.2.0
+# Parquet IO support used by datasets
+pyarrow==17.0.0
+# Keep anyio <4 to stay compatible with watchgod (pulled by some dev tools)
+anyio==3.7.1

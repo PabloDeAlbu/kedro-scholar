@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 from .nodes import (
     oai_load_identifiers,
     oai_load_records,
@@ -7,8 +7,8 @@ from .nodes import (
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([
-        node(
+    return Pipeline([
+        Node(
             name="oai_load_identifiers",
             func=oai_load_identifiers,
             inputs="raw/oai/identifiers#parquet",
@@ -17,7 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/oai/identifiers_sets",
             ],
         ),
-        node(
+        Node(
             name="oai_load_records",
             func=oai_load_records,
             inputs=[
@@ -35,11 +35,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/oai/records_rights",
             ],
         ),
-        node(
+        Node(
             name="oai_load_sets",
             func=oai_load_sets,
             inputs="primary/oai/sets",
             outputs="ldg/oai/sets"
         ),
-    ], tags="oai_load"
-)
+    ], tags="oai_load")

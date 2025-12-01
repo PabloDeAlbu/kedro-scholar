@@ -1,14 +1,19 @@
-from functools import partial
-from kedro.pipeline import Pipeline, node, pipeline
+from functools import partial, update_wrapper
+from kedro.pipeline import Node, Pipeline
 from .nodes import (
     clean_openalex_institution,
     openalex_extract,
 )
 
+openalex_extract_institution = update_wrapper(
+    partial(openalex_extract, cleaner=clean_openalex_institution),
+    openalex_extract,
+)
+
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([
-        node(
+    return Pipeline([
+        Node(
             name="openalex_extract_work",
             func=openalex_extract,
             inputs=[
@@ -19,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs=["raw/openalex/work#parquet","raw/openalex/work_dev#parquet"],
         ),
-        node(
+        Node(
             name="openalex_extract_author",
             func=openalex_extract,
             inputs=[
@@ -33,9 +38,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "raw/openalex/author_dev#parquet"
                 ],
         ),
-        node(
+        Node(
             name="openalex_extract_institution",
-            func=partial(openalex_extract, cleaner=clean_openalex_institution),
+            func=openalex_extract_institution,
             inputs=[
                 "params:openalex_extract_options.institution_ror",
                 "params:openalex_extract_options.institution_filter",
@@ -47,7 +52,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "raw/openalex/institution_dev#parquet"
                 ],
             ),
-        node(
+        Node(
             name="openalex_extract_funder",
             func=openalex_extract,
             inputs=[
@@ -61,5 +66,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "raw/openalex/funder_dev#parquet"
                 ],
             )
-    ], tags="openalex_extract"
-)
+    ], tags="openalex_extract")

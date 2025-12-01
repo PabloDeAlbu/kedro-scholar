@@ -1,6 +1,15 @@
 from datetime import date
 import pandas as pd
 
+def oai_load_identifiers(df_identifiers_raw: pd.DataFrame) -> pd.DataFrame:
+    df_identifiers = df_identifiers_raw[['record_id', 'datestamp', 'extract_datetime']]
+    df_identifiers_sets = df_identifiers_raw[['record_id', 'set_id', 'extract_datetime']].explode('set_id')
+
+    df_identifiers['load_datetime'] = pd.Timestamp.now(tz="UTC").normalize()
+    df_identifiers_sets['load_datetime'] = pd.Timestamp.now(tz="UTC").normalize()
+
+    return df_identifiers, df_identifiers_sets
+
 def oai_load_item(df_item_raw: pd.DataFrame)-> pd.DataFrame:
 
     df_item = df_item_raw[['item_id','col_id','title','date_issued', 'extract_datetime']]

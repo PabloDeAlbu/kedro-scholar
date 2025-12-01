@@ -44,3 +44,8 @@ def oai_load_records(df_record_raw: pd.DataFrame)-> pd.DataFrame:
     df_record_rights['load_datetime'] = pd.Timestamp.now(tz="UTC").normalize()
 
     return df_record, df_record_creators, df_record_types, df_record_identifiers, df_record_languages, df_record_subjects, df_record_publishers, df_record_relations, df_record_rights
+
+def oai_load_sets(df_sets_raw: pd.DataFrame) -> pd.DataFrame:
+    df_sets = df_sets_raw.copy()
+    df_sets["load_datetime"] = pd.Timestamp.now(tz="UTC").normalize()
+    return df_sets

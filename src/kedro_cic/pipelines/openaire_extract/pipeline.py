@@ -1,11 +1,11 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 from .nodes import (
     openaire_extract_researchproduct,
 )
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([
-        node(
+    return Pipeline([
+        Node(
             name="openaire_extract_researchproduct",
             func=openaire_extract_researchproduct,
             inputs=[
@@ -13,13 +13,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "params:openaire_extract_options.ror_filter_value",
                 "params:openaire_extract_options.access_token",
                 "params:openaire_extract_options.refresh_token",
-                "params:extract_options.env",
+                "params:openaire_extract_options.env",
             ],
             outputs=[
                 "raw/openaire/researchproduct#parquet",
-                "raw/openaire/researchproduct_dev#parquet",
+                "raw/openaire/researchproduct_dev",
                 ],
         )
-    ],
-    tags="openaire_extract"
-    )
+    ], tags="openaire_extract")

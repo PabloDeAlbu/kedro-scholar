@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 from .nodes import (
     oai_extract_records,
     oai_extract_sets,
@@ -8,8 +8,8 @@ from .nodes import (
 )
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline([
-        node(
+    return Pipeline([
+        Node(
             name="oai_extract_sets",
             func=oai_extract_sets,
             inputs=[
@@ -20,14 +20,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs="raw/oai/sets"
         ),
 
-        node(
+        Node(
             name="oai_intermediate_sets",
             func=oai_intermediate_sets,
             inputs="raw/oai/sets",
             outputs="intermediate/oai/sets"
         ),
 
-        node(
+        Node(
             name="oai_filter_col",
             func=oai_filter_col,
             inputs=[
@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs="intermediate/oai/cols"
         ),
 
-        node(
+        Node(
             name="oai_extract_identifiers_by_sets",
             func=oai_extract_identifiers_by_sets,
             inputs=[
@@ -50,7 +50,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs=["primary/oai/identifiers#parquet","primary/oai/cols#parquet" , "primary/oai/identifiers_dev"]
         ),
 
-        # node(
+        # Node(
         #     name="oai_extract_records",
         #     func=oai_extract_records,
         #     inputs=[
@@ -61,5 +61,4 @@ def create_pipeline(**kwargs) -> Pipeline:
         #     ],
         #     outputs=["raw/oai/records#parquet" , "raw/oai/records_dev"]
         # ),
-    ], tags="oai_extract"
-)
+    ], tags="oai_extract")
