@@ -6,7 +6,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 
 
-def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0):
+def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0, min_interval=0.0):
 
     # Usa el bundle de certifi para evitar errores de certificado en requests
     os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
@@ -21,15 +21,21 @@ def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0):
     for attempt in range(1, max_retries + 1):
         start_time = time.time()
         response = None
+        error = None
         try:
             response = requests.get(base_url, verify=verify_param)
-            elapsed_time = time.time() - start_time
         except requests.RequestException as exc:
-            elapsed_time = time.time() - start_time
-            print(f"Error en request (intento {attempt}/{max_retries}): {exc}")
-        sleep_time = max(elapsed_time, 0.1)
-        print(f"Sleeping for {sleep_time:.2f} seconds")
-        time.sleep(sleep_time)
+            error = exc
+        elapsed_time = time.time() - start_time
+
+        if min_interval > 0:
+            wait_time = max(min_interval - elapsed_time, 0)
+            if wait_time > 0:
+                print(f"Pausando {wait_time:.2f} segundos para no saturar el servidor")
+                time.sleep(wait_time)
+
+        if error:
+            print(f"Error en request (intento {attempt}/{max_retries}): {error}")
 
         if response and response.status_code == 200:
             return response
@@ -111,6 +117,94 @@ def oai_extract_identifiers_by_sets(base_url: str, context: str, env: str, df_se
     df['extract_datetime'] = timestamp
 
     return df, df_set, df.head(100)
+
+def oai_extract_records_by_identifiers(base_url: str, context: str, env: str, df_ids: pd.DataFrame, iteration_limit = 1, verify=None) -> pd.DataFrame:
+    records = []
+    ids_limit = 2 if env == "dev" else None
+    ids = df_ids.head(ids_limit).loc[:, "id"].tolist()
+
+    for record_id in ids:
+        params = f'/{context}?verb=GetRecord&metadataPrefix=oai_dc&identifier={record_id}'
+        url = base_url + params
+
+        print(f"Consultando: {url}")
+
+        response = get_oai_response(url, verify=verify)
+        if not response or not response.ok:
+            print(f"Error al consultar: {url}")
+            continue
+
+        xml_content = response.text
+
+        root = ET.fromstring(xml_content)
+        ns = { 'oai': 'http://www.openarchives.org/OAI/2.0/' ,
+               'dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/'
+            }
+    
+        record_nodes = root.findall('.//oai:header', ns)
+
+        if not record_nodes:
+            print("No se encontraron más registros.")
+            continue
+
+        for record in record_nodes:
+            
+            # Valores simples
+            record_identifier_node = record.find('.//oai:identifier', ns)
+            
+            record_datestamp = record.find('.//oai:datestamp', ns)
+            
+            # Multivaluados
+            setspec = [e.text for e in record.findall('.//oai:setSpec', ns)]
+
+            record_date = record.find('.//dc:date', ns)
+            record_title = record.find('.//dc:title', ns)
+
+            record_creator = [e.text for e in record.findall('.//dc:creator', ns)]
+            record_subject = [e.text for e in record.findall('.//dc:subject', ns)]
+            record_description = [e.text for e in record.findall('.//dc:description', ns)]
+            record_type = [e.text for e in record.findall('.//dc:type', ns)]
+            record_identifier = [e.text for e in record.findall('.//dc:identifier', ns)]
+            record_language = [e.text for e in record.findall('.//dc:language', ns)]
+            record_relation = [e.text for e in record.findall('.//dc:relation', ns)]
+            record_rights = [e.text for e in record.findall('.//dc:rights', ns)]
+            record_format = [e.text for e in record.findall('.//dc:format', ns)]
+            record_publisher = [e.text for e in record.findall('.//dc:publisher', ns)]
+            
+            records.append({
+                'record_id': record_identifier_node.text if record_identifier_node is not None else None,
+                'record_date': record_date.text if record_date is not None else None,
+                'record_title': record_title.text if record_title is not None else None,
+                'datestamp': record_datestamp.text if record_datestamp is not None else None,
+
+                'set_id': setspec,
+                'record_creator': record_creator,
+                'record_subject': record_subject,
+                'record_description': record_description,
+                'record_type': record_type,
+                'record_identifier': record_identifier,
+                'record_language': record_language,
+                'record_relation': record_relation,
+                'record_rights': record_rights,
+                'record_format': record_format,
+                'record_publisher': record_publisher
+            })
+          
+    df = pd.DataFrame(records)
+
+    timestamp = pd.Timestamp.now(tz="UTC").normalize()
+    df['extract_datetime'] = timestamp
+
+    # convierte cada lista en columnas (set_0, set_1, ...)
+    sets_df = df['set_id'].apply(pd.Series)
+    sets_df = sets_df.rename(columns=lambda i: f'set_{i}')
+
+    # junta con record_id y (opcional) elimina la columna original
+    df_sets = pd.concat([df[['record_id']], sets_df], axis=1)
+
+    df_sets
+
+    return df, df_sets, df.head(100)
 
 
 def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: str, verify=None) -> pd.DataFrame:

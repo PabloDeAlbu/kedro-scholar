@@ -1,10 +1,11 @@
 from kedro.pipeline import Node, Pipeline
 from .nodes import (
-    oai_extract_records,
+    # oai_extract_records,
     oai_extract_sets,
     oai_filter_col,    
     oai_intermediate_sets,
     oai_extract_identifiers_by_sets,
+    oai_extract_records_by_identifiers
 )
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -50,6 +51,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs=["primary/oai/identifiers#parquet","primary/oai/cols#parquet" , "primary/oai/identifiers_dev"]
         ),
 
+        Node(
+            name="oai_extract_records_by_identifiers",
+            func=oai_extract_records_by_identifiers,
+            inputs=[
+                "params:oai_extract_options.base_url",
+                "params:oai_extract_options.context",
+                "params:oai_extract_options.env",
+                "intermediate/oai/identifiers",
+                "params:oai_extract_options.iteration_limit",
+            ],
+            outputs=["primary/oai/records","primary/oai/records_sets" , "primary/oai/records_dev"]
+        ),
         # Node(
         #     name="oai_extract_records",
         #     func=oai_extract_records,
