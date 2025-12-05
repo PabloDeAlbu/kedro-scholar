@@ -4,6 +4,7 @@ import certifi
 import requests
 import pandas as pd
 import xml.etree.ElementTree as ET
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 
 def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0, min_interval=0.0):
@@ -13,6 +14,7 @@ def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0, m
     os.environ.setdefault("SSL_CERT_FILE", certifi.where())
     VERIFY_SSL = os.getenv("OAI_VERIFY_SSL", "false").lower() == "true"
     CA_BUNDLE = os.getenv("OAI_CA_BUNDLE") or certifi.where()
+    requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
     verify_param = CA_BUNDLE if VERIFY_SSL else False
     if verify is not None:
