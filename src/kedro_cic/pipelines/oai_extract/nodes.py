@@ -51,6 +51,20 @@ def get_oai_response(base_url, verify=None, max_retries=3, backoff_factor=1.0, m
             time.sleep(backoff)
     return None
 
+def log_oai_progress(token_elem, total_processed: int):
+    """Muestra el avance usando completeListSize y los registros acumulados."""
+    if token_elem is None:
+        return
+    total = token_elem.get('completeListSize')
+    try:
+        total_int = int(total) if total is not None else None
+        if total_int is not None and total_processed is not None:
+            remaining = total_int - total_processed
+            print(f"Progreso OAI: {total_processed}/{total_int} (faltan ~{remaining})")
+    except ValueError:
+        # Si el servidor devuelve valores no numéricos, ignora el progreso.
+        pass
+
 def oai_extract_identifiers_by_sets(base_url: str, context: str, env: str, df_set: pd.DataFrame, iteration_limit = 1, verify=None) -> pd.DataFrame:
     records = []
     if env == "dev": iteration_limit = 2 
@@ -209,88 +223,99 @@ def oai_extract_records_by_identifiers(base_url: str, context: str, env: str, df
     return df, df_sets, df.head(100)
 
 
-def oai_extract_records(base_url: str, context: str, df_set: pd.DataFrame, env: str, verify=None) -> pd.DataFrame:
+def oai_extract_records(base_url: str, context: str, env: str, verify=None) -> pd.DataFrame:
     records = []
     
     iteration_limit = 2 if env == "dev" else None
+    resumption_token = None
+    iteration_count = 0
 
-    pending_cols = df_set[df_set["processed"] == False]
-    col_ids = pending_cols.head(iteration_limit).iloc[:, 0].tolist()
+    total_processed = 0
 
-    if not col_ids:
-        print("No se encontraron colecciones pendientes con processed=False.")
+    while True:
+        if iteration_limit is not None and iteration_count >= iteration_limit:
+            break
 
-    for set_id in col_ids:
-        resumption_token = 0
-        iteration_count = 0
+        if resumption_token:
+            params = f'/{context}?verb=ListRecords&resumptionToken={resumption_token}'
+        else:
+            params = f'/{context}?verb=ListRecords&metadataPrefix=oai_dc'
 
-        while True:
-            if env == 'dev' and iteration_limit is not None and iteration_count >= iteration_limit:
-                break
+        url = base_url + params
 
-            params = f'/{context}?verb=ListRecords&resumptionToken=oai_dc///{set_id}/{resumption_token}'
-            url = base_url + params
+        print(f"Consultando: {url}")
 
-            print(f"Consultando: {url}")
+        response = get_oai_response(url, verify=verify)
 
-            response = get_oai_response(url, verify=verify)
+        iteration_count += 1
 
-            resumption_token += 100
-            iteration_count += 1
+        if not response or not response.ok:
+            print(f"Error al consultar: {url}")
+            break
 
-            if not response or not response.ok:
-                print(f"Error al consultar: {url}")
-                break
+        xml_content = response.text
+        root = ET.fromstring(xml_content)
+        ns = {
+            'oai': 'http://www.openarchives.org/OAI/2.0/',
+            'dc': 'http://purl.org/dc/elements/1.1/'
+        }
 
-            xml_content = response.text
-            root = ET.fromstring(xml_content)
-            ns = {
-                'oai': 'http://www.openarchives.org/OAI/2.0/',
-                'dc': 'http://purl.org/dc/elements/1.1/'
-            }
+        record_nodes = root.findall('.//oai:record', ns)
 
-            record_nodes = root.findall('.//oai:record', ns)
+        if not record_nodes:
+            print("No se encontraron más registros.")
+            break
 
-            if not record_nodes:
-                print("No se encontraron más registros.")
-                break
+        for record in record_nodes:
+            header = record.find('.//oai:header', ns)
+            identifier_node = header.find('.//oai:identifier', ns) if header is not None else None
+            datestamp_node = header.find('.//oai:datestamp', ns) if header is not None else None
+            setspec = [e.text for e in header.findall('.//oai:setSpec', ns)] if header is not None else []
 
-            for record in record_nodes:
-                identifier = record.find('.//oai:identifier', ns)
-                item_id = identifier.text if identifier is not None else None
-                metadata = record.find('.//oai:metadata', ns)
+            metadata = record.find('.//oai:metadata', ns)
 
-                if metadata is None:
-                    continue
+            if metadata is None:
+                continue
 
-                # Valores simples
-                title = metadata.find('.//dc:title', ns)
-                date_issued = metadata.find('.//dc:date', ns)
+            # Valores simples
+            title = metadata.find('.//dc:title', ns)
+            date_issued = metadata.find('.//dc:date', ns)
 
-                # Multivaluados
-                creators = [e.text for e in metadata.findall('.//dc:creator', ns)]
-                types = [e.text for e in metadata.findall('.//dc:type', ns)]
-                identifiers = [e.text for e in metadata.findall('.//dc:identifier', ns)]
-                languages = [e.text for e in metadata.findall('.//dc:language', ns)]
-                publishers = [e.text for e in metadata.findall('.//dc:publisher', ns)]
-                subjects = [e.text for e in metadata.findall('.//dc:subject', ns)]
-                relations = [e.text for e in metadata.findall('.//dc:relation', ns)]
-                rights = [e.text for e in metadata.findall('.//dc:rights', ns)]
+            # Multivaluados
+            creators = [e.text for e in metadata.findall('.//dc:creator', ns)]
+            types = [e.text for e in metadata.findall('.//dc:type', ns)]
+            identifiers = [e.text for e in metadata.findall('.//dc:identifier', ns)]
+            languages = [e.text for e in metadata.findall('.//dc:language', ns)]
+            publishers = [e.text for e in metadata.findall('.//dc:publisher', ns)]
+            subjects = [e.text for e in metadata.findall('.//dc:subject', ns)]
+            relations = [e.text for e in metadata.findall('.//dc:relation', ns)]
+            rights = [e.text for e in metadata.findall('.//dc:rights', ns)]
 
-                records.append({
-                    'item_id': item_id,
-                    'col_id': set_id,
-                    'title': title.text if title is not None else None,
-                    'date_issued': date_issued.text if date_issued is not None else None,
-                    'creators': creators,
-                    'types': types,
-                    'identifiers': identifiers,
-                    'languages': languages,
-                    'subjects': subjects,
-                    'publishers': publishers,
-                    'relations': relations,
-                    'rights': rights
-                })
+            records.append({
+                'record_id': identifier_node.text if identifier_node is not None else None,
+                'datestamp': datestamp_node.text if datestamp_node is not None else None,
+                'set_id': setspec,
+                'col_id': setspec[0] if setspec else None,
+                'title': title.text if title is not None else None,
+                'date_issued': date_issued.text if date_issued is not None else None,
+                'creators': creators,
+                'types': types,
+                'identifiers': identifiers,
+                'languages': languages,
+                'subjects': subjects,
+                'publishers': publishers,
+                'relations': relations,
+                'rights': rights
+            })
+
+        total_processed += len(record_nodes)
+
+        token_elem = root.find('.//oai:resumptionToken', ns)
+        resumption_token = token_elem.text if token_elem is not None else None
+        log_oai_progress(token_elem, total_processed)
+
+        if not resumption_token:
+            break
 
     df = pd.DataFrame(records)
 

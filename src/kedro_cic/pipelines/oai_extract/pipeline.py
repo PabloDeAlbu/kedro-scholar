@@ -1,6 +1,6 @@
 from kedro.pipeline import Node, Pipeline
 from .nodes import (
-    # oai_extract_records,
+    oai_extract_records,
     oai_extract_sets,
     oai_filter_col,    
     oai_intermediate_sets,
@@ -63,15 +63,14 @@ def create_pipeline(**kwargs) -> Pipeline:
             ],
             outputs=["primary/oai/records","primary/oai/records_sets" , "primary/oai/records_dev"]
         ),
-        # Node(
-        #     name="oai_extract_records",
-        #     func=oai_extract_records,
-        #     inputs=[
-        #         "params:oai_extract_options.base_url",
-        #         "params:oai_extract_options.context",
-        #         "intermediate/oai/cols",
-        #         "params:oai_extract_options.env",
-        #     ],
-        #     outputs=["raw/oai/records#parquet" , "raw/oai/records_dev"]
-        # ),
+        Node(
+            name="oai_extract_records",
+            func=oai_extract_records,
+            inputs=[
+                "params:oai_extract_options.base_url",
+                "params:oai_extract_options.context",
+                "params:oai_extract_options.env",
+            ],
+            outputs=["raw/oai/records#parquet" , "raw/oai/records_dev"]
+        ),
     ], tags="oai_extract")
