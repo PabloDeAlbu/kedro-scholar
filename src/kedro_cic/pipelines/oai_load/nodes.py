@@ -11,7 +11,9 @@ def oai_load_identifiers(df_identifiers_raw: pd.DataFrame)-> pd.DataFrame:
 
     return df_identifiers, df_identifiers_sets
 
-def oai_load_records(df_records_raw: pd.DataFrame)-> pd.DataFrame:
+def oai_load_records(df_records_raw: pd.DataFrame, env = 'dev')-> pd.DataFrame:
+
+    if env == 'dev': df_records_raw = df_records_raw.head(1000)
 
     df_records = df_records_raw[['record_id','col_id','title','date_issued', 'extract_datetime']]
 

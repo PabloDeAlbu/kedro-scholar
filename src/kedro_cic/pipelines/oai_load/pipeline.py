@@ -21,7 +21,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="oai_load_records",
             func=oai_load_records,
             inputs=[
-                "raw/oai/records#parquet"
+                "raw/oai/records#parquet",
+                "params:oai_load_options.env",                
             ],
             outputs=[
                 "ldg/oai/records",
