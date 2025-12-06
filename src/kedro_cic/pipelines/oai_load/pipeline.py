@@ -33,7 +33,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/oai/records_publishers",
                 "ldg/oai/records_relations",
                 "ldg/oai/records_rights",
-            ],
+                "ldg/oai/records_sets",
+           ],
         ),
         Node(
             name="oai_load_sets",
