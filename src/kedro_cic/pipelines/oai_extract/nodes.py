@@ -218,8 +218,6 @@ def oai_extract_records_by_identifiers(base_url: str, context: str, env: str, df
     # junta con record_id y (opcional) elimina la columna original
     df_sets = pd.concat([df[['record_id']], sets_df], axis=1)
 
-    df_sets
-
     return df, df_sets, df.head(100)
 
 
@@ -282,6 +280,8 @@ def oai_extract_records(base_url: str, context: str, env: str, verify=None) -> p
             date_issued = metadata.find('.//dc:date', ns)
 
             # Multivaluados
+            setspec = [e.text for e in record.findall('.//oai:setSpec', ns)]
+
             creators = [e.text for e in metadata.findall('.//dc:creator', ns)]
             types = [e.text for e in metadata.findall('.//dc:type', ns)]
             identifiers = [e.text for e in metadata.findall('.//dc:identifier', ns)]
