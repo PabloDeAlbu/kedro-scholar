@@ -40,7 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         Node(
             name="oai_load_sets",
             func=oai_load_sets,
-            inputs="primary/oai/sets",
+            inputs="raw/oai/sets",
             outputs="ldg/oai/sets"
         ),
     ], tags="oai_load")
