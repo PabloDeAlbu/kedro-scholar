@@ -50,12 +50,13 @@ def oai_load_records(df_records_raw: pd.DataFrame, env = 'dev')-> pd.DataFrame:
     df_record_publishers = _explode('publishers')
     df_record_relations = _explode('relations')
     df_record_rights = _explode('rights')
+    df_record_sets = _explode('set_id')
 
-    df_record_sets = _select(['record_id','set_id', 'extract_datetime'])
-    sets_df = df_record_sets.pop('set_id').apply(pd.Series)
-    sets_df = sets_df.rename(columns=lambda i: f'set_{i}')
-    df_record_sets = pd.concat([df_record_sets, sets_df], axis=1)
-    df_record_sets['load_datetime'] = load_dt
+#    df_record_sets = _select(['record_id','set_id', 'extract_datetime'])
+#    sets_df = df_record_sets.pop('set_id').apply(pd.Series)
+#    sets_df = sets_df.rename(columns=lambda i: f'set_{i}')
+#    df_record_sets = pd.concat([df_record_sets, sets_df], axis=1)
+#    df_record_sets['load_datetime'] = load_dt
 
     return df_records, df_record_creators, df_record_types, df_record_identifiers, df_record_languages, df_record_subjects, df_record_publishers, df_record_relations, df_record_rights, df_record_sets
 
