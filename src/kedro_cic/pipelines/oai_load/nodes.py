@@ -35,14 +35,20 @@ def oai_load_records(df_records_raw: pd.DataFrame, env = 'dev')-> pd.DataFrame:
         return df_records_raw.loc[:, columns].copy()
 
     def _explode(column):
+        base_cols = ['record_id', column, 'extract_datetime']
+        missing_cols = [col for col in base_cols if col not in df_records_raw.columns]
+        if missing_cols:
+            # Si la columna no existe, devolvé un df vacío con las columnas esperadas
+            return pd.DataFrame(columns=base_cols + ['load_datetime'])
         return (
-            _select(['record_id', column, 'extract_datetime'])
+            _select(base_cols)
             .explode(column, ignore_index=True)
             .assign(load_datetime=load_dt)
         )
 
     df_records = _select(['record_id','col_id','title','date_issued', 'extract_datetime']).assign(load_datetime=load_dt)
     df_record_creators = _explode('creators')
+    df_record_descriptions = _explode('descriptions')
     df_record_types = _explode('types')
     df_record_identifiers = _explode('identifiers')
     df_record_languages = _explode('languages')
@@ -50,6 +56,7 @@ def oai_load_records(df_records_raw: pd.DataFrame, env = 'dev')-> pd.DataFrame:
     df_record_publishers = _explode('publishers')
     df_record_relations = _explode('relations')
     df_record_rights = _explode('rights')
+    df_record_formats = _explode('formats')
     df_record_sets = _explode('set_id')
 
 #    df_record_sets = _select(['record_id','set_id', 'extract_datetime'])
@@ -58,7 +65,10 @@ def oai_load_records(df_records_raw: pd.DataFrame, env = 'dev')-> pd.DataFrame:
 #    df_record_sets = pd.concat([df_record_sets, sets_df], axis=1)
 #    df_record_sets['load_datetime'] = load_dt
 
-    return df_records, df_record_creators, df_record_types, df_record_identifiers, df_record_languages, df_record_subjects, df_record_publishers, df_record_relations, df_record_rights, df_record_sets
+    return df_records, df_record_creators, df_record_descriptions, \
+        df_record_types, df_record_identifiers, df_record_languages, \
+            df_record_subjects, df_record_publishers, df_record_relations, \
+                df_record_rights, df_record_formats, df_record_sets
 
 def oai_load_sets(df: pd.DataFrame)-> pd.DataFrame:
 
