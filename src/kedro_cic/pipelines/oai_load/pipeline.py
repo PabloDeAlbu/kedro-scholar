@@ -27,6 +27,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs=[
                 "ldg/oai/records",
                 "ldg/oai/record_creators",
+                "ldg/oai/record_descriptions",
                 "ldg/oai/record_types",
                 "ldg/oai/record_identifiers",
                 "ldg/oai/record_languages",
@@ -34,6 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "ldg/oai/record_publishers",
                 "ldg/oai/record_relations",
                 "ldg/oai/record_rights",
+                "ldg/oai/record_formats",
                 "ldg/oai/record_sets",
            ],
         ),
