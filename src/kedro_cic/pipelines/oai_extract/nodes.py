@@ -283,6 +283,7 @@ def oai_extract_records(base_url: str, context: str, env: str, verify=None) -> p
             setspec = [e.text for e in record.findall('.//oai:setSpec', ns)]
 
             creators = [e.text for e in metadata.findall('.//dc:creator', ns)]
+            description = [e.text for e in metadata.findall('.//dc:description', ns)]
             types = [e.text for e in metadata.findall('.//dc:type', ns)]
             identifiers = [e.text for e in metadata.findall('.//dc:identifier', ns)]
             languages = [e.text for e in metadata.findall('.//dc:language', ns)]
@@ -290,6 +291,7 @@ def oai_extract_records(base_url: str, context: str, env: str, verify=None) -> p
             subjects = [e.text for e in metadata.findall('.//dc:subject', ns)]
             relations = [e.text for e in metadata.findall('.//dc:relation', ns)]
             rights = [e.text for e in metadata.findall('.//dc:rights', ns)]
+            formats = [e.text for e in metadata.findall('.//dc:format', ns)]
 
             records.append({
                 'record_id': identifier_node.text if identifier_node is not None else None,
@@ -299,13 +301,15 @@ def oai_extract_records(base_url: str, context: str, env: str, verify=None) -> p
                 'title': title.text if title is not None else None,
                 'date_issued': date_issued.text if date_issued is not None else None,
                 'creators': creators,
+                'description': description,
                 'types': types,
                 'identifiers': identifiers,
                 'languages': languages,
                 'subjects': subjects,
                 'publishers': publishers,
                 'relations': relations,
-                'rights': rights
+                'rights': rights,
+                'formats': formats
             })
 
         total_processed += len(record_nodes)
